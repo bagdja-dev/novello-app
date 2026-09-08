@@ -22,6 +22,7 @@ const API_BASE = process.env.NEXT_PUBLIC_NOVELO_API_URL ?? 'http://localhost:502
 const PLATFORM_CONFIG_FALLBACK: PlatformConfigDto = {
   title: 'Novelo',
   logo: null,
+  favicon: null,
   colors: {
     bg: '#fbf6ee',
     surface: '#fffdf8',
@@ -79,6 +80,7 @@ export async function getPlatformConfig(): Promise<PlatformConfigDto> {
   return {
     title: config.title || PLATFORM_CONFIG_FALLBACK.title,
     logo: config.logo ?? PLATFORM_CONFIG_FALLBACK.logo,
+    favicon: config.favicon ?? PLATFORM_CONFIG_FALLBACK.favicon,
     colors: { ...PLATFORM_CONFIG_FALLBACK.colors, ...config.colors },
     lockStudio: config.lockStudio ?? PLATFORM_CONFIG_FALLBACK.lockStudio,
   };

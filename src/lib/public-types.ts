@@ -37,6 +37,8 @@ export interface PlatformColors {
 export interface PlatformConfigDto {
   title: string;
   logo: string | null;
+  /** URL favicon browser tab — terpisah dari `logo` (dipakai di header). */
+  favicon: string | null;
   colors: PlatformColors;
   lockStudio: boolean;
 }
