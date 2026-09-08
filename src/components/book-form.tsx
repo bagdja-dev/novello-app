@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { CoverImageUpload } from '@/components/cover-image-upload';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -47,6 +48,7 @@ export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmi
   const [sinopsis, setSinopsis] = useState(initialValues?.sinopsis ?? '');
   const [genreId, setGenreId] = useState(initialValues?.genreId ?? '');
   const [coverUrl, setCoverUrl] = useState(initialValues?.coverUrl ?? '');
+  const [coverUploading, setCoverUploading] = useState(false);
 
   const [genres, setGenres] = useState<GenreDto[] | null>(null);
 
@@ -148,22 +150,18 @@ export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmi
         )}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="coverUrl">Cover URL (opsional)</Label>
-        <Input
-          id="coverUrl"
-          value={coverUrl}
-          onChange={(e) => setCoverUrl(e.target.value)}
-          placeholder="https://…"
-          disabled={submitting}
-        />
-        <p className="text-xs text-muted-foreground">
-          Tempel URL gambar cover — upload langsung akan tersedia di fase berikutnya.
-        </p>
-      </div>
+      <CoverImageUpload
+        id="coverUrl"
+        label="Cover Book (opsional)"
+        folder="books"
+        value={coverUrl}
+        onChange={setCoverUrl}
+        disabled={submitting}
+        onUploadingChange={setCoverUploading}
+      />
 
-      <Button type="submit" disabled={submitting} className="mt-2">
-        {submitting ? 'Menyimpan…' : submitLabel}
+      <Button type="submit" disabled={submitting || coverUploading} className="mt-2">
+        {submitting ? 'Menyimpan…' : coverUploading ? 'Menunggu upload cover…' : submitLabel}
       </Button>
     </form>
   );
