@@ -23,6 +23,14 @@ export interface CreateLibraryPayload {
   coverUrl?: string;
 }
 
+// Catatan: `PATCH /libraries/me` TIDAK menerima `slug` (kontrak backend) —
+// slug dipakai di URL publik /library/{slug}, hanya ditentukan saat create.
+export interface UpdateLibraryPayload {
+  nama?: string;
+  deskripsi?: string;
+  coverUrl?: string;
+}
+
 export type BookStatus = 'draft' | 'ongoing' | 'completed';
 export type ChapterStatus = 'draft' | 'published';
 /** original (default) / translation / adaptation — Book terjemahan/adaptasi karya orang lain. */

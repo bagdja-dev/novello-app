@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Library } from 'lucide-react';
+import { BookOpen, Library, Settings } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { getPlatformConfig } from '@/lib/public-api';
@@ -11,6 +11,8 @@ import { getPlatformConfig } from '@/lib/public-api';
 const NAV_ITEMS = [
   { href: '/dashboard/books', label: 'Book & Chapter', icon: Library },
 ];
+
+const SETTINGS_ITEM = { href: '/dashboard/settings', label: 'Pengaturan', icon: Settings };
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -53,6 +55,21 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      <div className="border-t border-sidebar-border p-3">
+        <Link
+          href={SETTINGS_ITEM.href}
+          className={cn(
+            'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors',
+            pathname.startsWith(SETTINGS_ITEM.href)
+              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+              : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+          )}
+        >
+          <SETTINGS_ITEM.icon className="h-4 w-4" />
+          {SETTINGS_ITEM.label}
+        </Link>
+      </div>
     </aside>
   );
 }
