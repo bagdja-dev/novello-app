@@ -3,7 +3,7 @@ import { setSession } from '@/lib/session';
 import { consumeOAuthState } from '@/lib/oauth-state-store';
 
 const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL ?? 'https://login.bagdja.com';
-const CLIENT_ID = process.env.NEXT_PUBLIC_CLIENT_ID ?? 'novelo-studio';
+const CLIENT_ID = process.env.NEXT_PUBLIC_CLIENT_ID ?? 'novelo';
 const CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET ?? '';
 const REDIRECT_URI =
   process.env.NEXT_PUBLIC_REDIRECT_URI ?? 'http://localhost:5021/auth/callback';
