@@ -1,9 +1,12 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { useAuth } from '@/hooks/use-auth';
+import { apiClient } from '@/lib/api-client';
+import type { Library } from '@/lib/types';
 
 /**
  * Bagian header reader yang bergantung status login — sengaja dipisah jadi
@@ -25,11 +28,50 @@ export function ReaderAuthNav({ lockStudio }: ReaderAuthNavProps) {
   const { isLoggedIn, loading } = useAuth();
   const pathname = usePathname();
 
-  if (loading) {
+  // lockStudio hanya menutup PENDAFTARAN Library baru — user yang SUDAH
+  // punya Library tetap boleh akses Studio-nya. Jadi "Studio Saya" perlu
+  // status Library user login saat lockStudio true. Sengaja HANYA fetch
+  // `/libraries/me` kalau lockStudio true DAN user login (apiClient redirect
+  // otomatis ke /auth/login kalau sesi 401 — jangan pernah dipanggil untuk
+  // guest yang belum login sama sekali, dan jangan nambah roundtrip kalau
+  // platform sedang tidak dikunci).
+  const [hasLibrary, setHasLibrary] = useState(false);
+  const [libraryChecking, setLibraryChecking] = useState(lockStudio);
+
+  useEffect(() => {
+    // Early-return TANPA setLibraryChecking(false) di sini secara sengaja —
+    // gate render di bawah sudah men-short-circuit lewat `isLoggedIn &&
+    // lockStudio &&`, jadi nilai `libraryChecking` tidak relevan saat salah
+    // satu kondisi ini false.
+    if (!lockStudio || !isLoggedIn) {
+      return;
+    }
+
+    let cancelled = false;
+    setLibraryChecking(true);
+    apiClient<Library | null>('/libraries/me')
+      .then((data) => {
+        if (!cancelled) setHasLibrary(!!data);
+      })
+      .catch(() => {
+        if (!cancelled) setHasLibrary(false);
+      })
+      .finally(() => {
+        if (!cancelled) setLibraryChecking(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [lockStudio, isLoggedIn]);
+
+  if (loading || (isLoggedIn && lockStudio && libraryChecking)) {
     return <div className="h-8 w-28" aria-hidden />;
   }
 
   if (isLoggedIn) {
+    const showStudioLink = !lockStudio || hasLibrary;
+
     return (
       <nav className="flex items-center gap-4 text-sm">
         <Link
@@ -44,12 +86,14 @@ export function ReaderAuthNav({ lockStudio }: ReaderAuthNavProps) {
         >
           Highlight Saya
         </Link>
-        <Link
-          href="/dashboard"
-          className="font-medium text-[var(--reader-foreground)] transition-colors hover:text-[var(--reader-terracotta)]"
-        >
-          Studio Saya
-        </Link>
+        {showStudioLink && (
+          <Link
+            href="/dashboard"
+            className="font-medium text-[var(--reader-foreground)] transition-colors hover:text-[var(--reader-terracotta)]"
+          >
+            Studio Saya
+          </Link>
+        )}
         <a
           href="/auth/logout"
           className="text-[var(--reader-muted)] transition-colors hover:text-[var(--reader-terracotta)]"
