@@ -4,7 +4,7 @@ import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { ArrowLeft, ArrowUp, ArrowDown, FileText, Pencil, Plus } from 'lucide-react';
+import { ArrowLeft, ArrowUp, ArrowDown, Eye, EyeOff, FileText, Pencil, Plus, Trash2 } from 'lucide-react';
 
 import { LoadingSpinner } from '@/components/loading-spinner';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,8 @@ function ChapterRow({
   moving,
   onTogglePublish,
   publishingId,
+  onDelete,
+  deletingId,
 }: {
   chapter: Chapter;
   index: number;
@@ -32,9 +34,12 @@ function ChapterRow({
   moving: boolean;
   onTogglePublish: (chapter: Chapter) => void;
   publishingId: string | null;
+  onDelete: (chapter: Chapter) => void;
+  deletingId: string | null;
 }) {
   const isPublished = chapter.status === 'published';
   const isPublishing = publishingId === chapter.id;
+  const isDeleting = deletingId === chapter.id;
 
   return (
     <div className="flex items-center gap-3 rounded-lg border bg-card px-4 py-3">
@@ -52,16 +57,16 @@ function ChapterRow({
         {CHAPTER_STATUS_LABEL[chapter.status]}
       </Badge>
 
-      <Button
-        variant={isPublished ? 'outline' : 'default'}
-        size="sm"
-        disabled={isPublishing}
-        onClick={() => onTogglePublish(chapter)}
-      >
-        {isPublishing ? 'Memproses…' : isPublished ? 'Batalkan Publish' : 'Publish'}
-      </Button>
-
       <div className="flex shrink-0 items-center gap-1">
+        <Button
+          variant="outline"
+          size="icon-sm"
+          disabled={isPublishing}
+          title={isPublished ? 'Batalkan Publish' : 'Publish'}
+          onClick={() => onTogglePublish(chapter)}
+        >
+          {isPublished ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </Button>
         <Button
           variant="outline"
           size="icon-sm"
@@ -80,6 +85,16 @@ function ChapterRow({
         >
           <ArrowDown className="h-4 w-4" />
         </Button>
+        <Button
+          variant="outline"
+          size="icon-sm"
+          disabled={isDeleting}
+          title="Hapus Chapter"
+          onClick={() => onDelete(chapter)}
+          className="hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
@@ -96,6 +111,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ bookId: s
   const [creatingChapter, setCreatingChapter] = useState(false);
   const [publishingId, setPublishingId] = useState<string | null>(null);
   const [publishingBook, setPublishingBook] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -184,6 +200,22 @@ export default function BookDetailPage({ params }: { params: Promise<{ bookId: s
       toast.error(err instanceof ApiError ? err.message : 'Gagal mengubah status publikasi Book.');
     } finally {
       setPublishingBook(false);
+    }
+  }
+
+  async function handleDeleteChapter(chapter: Chapter) {
+    const confirmed = window.confirm(`Hapus Chapter "${chapter.judul}"? Tindakan ini tidak bisa dibatalkan.`);
+    if (!confirmed) return;
+
+    setDeletingId(chapter.id);
+    try {
+      await apiClient(`/books/${bookId}/chapters/${chapter.id}`, { method: 'DELETE' });
+      setChapters((prev) => prev?.filter((c) => c.id !== chapter.id) ?? prev);
+      toast.success('Chapter dihapus.');
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Gagal menghapus Chapter.');
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -291,6 +323,8 @@ export default function BookDetailPage({ params }: { params: Promise<{ bookId: s
                 moving={reordering}
                 onTogglePublish={handleTogglePublish}
                 publishingId={publishingId}
+                onDelete={handleDeleteChapter}
+                deletingId={deletingId}
               />
             ))}
           </div>
