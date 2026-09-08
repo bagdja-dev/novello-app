@@ -16,13 +16,20 @@ interface CoverImageUploadProps {
   disabled?: boolean;
   /** Form pemanggil butuh tahu status upload untuk disable tombol submit-nya sendiri. */
   onUploadingChange?: (uploading: boolean) => void;
+  /** Dimensi preview dalam px — beda konteks beda proporsi (Library landscape, Book portrait). */
+  previewWidth?: number;
+  previewHeight?: number;
 }
 
 /**
- * Upload gambar cover (Library/Book) — dipakai `onboarding/page.tsx` (Library)
- * dan `book-form.tsx` (Book), diekstrak jadi satu komponen supaya tidak
- * duplikasi logic preview/upload/error. Lihat `lib/upload-image.ts` untuk
- * kontrak `POST /api/uploads/image` (validasi tipe/ukuran client-side dulu).
+ * Upload gambar cover (Library/Book) — dipakai `onboarding/page.tsx` (Library,
+ * preview landscape) dan `book-form.tsx` (Book, preview portrait 2:3 —
+ * proporsi cover buku), diekstrak jadi satu komponen supaya tidak duplikasi
+ * logic preview/upload/error. Dimensi preview di-parametrize (`previewWidth`/
+ * `previewHeight`) lewat inline style, BUKAN class Tailwind `w-*`/`h-*` —
+ * supaya nilai px bebas ditentukan pemanggil tanpa terbatas skala spacing
+ * Tailwind. Lihat `lib/upload-image.ts` untuk kontrak `POST
+ * /api/uploads/image` (validasi tipe/ukuran client-side dulu).
  */
 export function CoverImageUpload({
   id = 'cover',
@@ -32,6 +39,8 @@ export function CoverImageUpload({
   onChange,
   disabled,
   onUploadingChange,
+  previewWidth = 96,
+  previewHeight = 96,
 }: CoverImageUploadProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -86,7 +95,10 @@ export function CoverImageUpload({
     <div className="flex flex-col gap-2">
       <Label htmlFor={id}>{label}</Label>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-        <div className="flex h-36 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-input bg-muted">
+        <div
+          className="flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-input bg-muted"
+          style={{ width: previewWidth, height: previewHeight }}
+        >
           {preview || value ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={preview || value} alt={`Preview ${label}`} className="h-full w-full object-cover" />

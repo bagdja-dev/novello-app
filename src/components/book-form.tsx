@@ -158,6 +158,8 @@ export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmi
         onChange={setCoverUrl}
         disabled={submitting}
         onUploadingChange={setCoverUploading}
+        previewWidth={96}
+        previewHeight={144}
       />
 
       <Button type="submit" disabled={submitting || coverUploading} className="mt-2">

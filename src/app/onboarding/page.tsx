@@ -163,6 +163,8 @@ function OnboardingForm() {
               onChange={setCoverUrl}
               disabled={submitting}
               onUploadingChange={setCoverUploading}
+              previewWidth={144}
+              previewHeight={96}
             />
 
             <Button type="submit" disabled={submitting || coverUploading} className="mt-2">
