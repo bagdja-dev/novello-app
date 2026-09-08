@@ -23,6 +23,12 @@ export function ReaderAuthNav() {
     return (
       <nav className="flex items-center gap-4 text-sm">
         <Link
+          href="/my/continue-reading"
+          className="text-[var(--reader-muted)] transition-colors hover:text-[var(--reader-terracotta)]"
+        >
+          Lanjutkan Baca
+        </Link>
+        <Link
           href="/my/highlights"
           className="text-[var(--reader-muted)] transition-colors hover:text-[var(--reader-terracotta)]"
         >
