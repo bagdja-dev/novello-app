@@ -1,11 +1,11 @@
 'use client';
 
+import Link from 'next/link';
 import { BookOpen } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
 import { useLibraryContext } from '@/context/library-context';
 
-// Fase 0 — shell dashboard kosong. Kelola Book & Chapter sungguhan mulai
-// Fase 1 (lihat plan/novelo/execution-plan.md).
 export default function DashboardIndexPage() {
   const library = useLibraryContext();
 
@@ -16,8 +16,12 @@ export default function DashboardIndexPage() {
       </div>
       <h1 className="text-lg font-semibold">Selamat datang di {library.nama}</h1>
       <p className="max-w-sm text-sm text-muted-foreground">
-        Fase 1: kelola Book & Chapter segera hadir.
+        Kelola Book & Chapter kamu di sini — mulai dari membuat Book baru sampai menulis dan
+        menerbitkan Chapter.
       </p>
+      <Button asChild className="mt-1">
+        <Link href="/dashboard/books">Kelola Book</Link>
+      </Button>
     </div>
   );
 }

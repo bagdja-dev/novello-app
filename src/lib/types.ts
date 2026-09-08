@@ -20,3 +20,70 @@ export interface CreateLibraryPayload {
   deskripsi?: string;
   coverUrl?: string;
 }
+
+export type BookStatus = 'draft' | 'ongoing' | 'completed';
+export type ChapterStatus = 'draft' | 'published';
+
+export interface Book {
+  id: string;
+  libraryId: string;
+  judul: string;
+  slug: string;
+  sinopsis: string | null;
+  genre: string | null;
+  coverUrl: string | null;
+  status: BookStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateBookPayload {
+  judul: string;
+  slug: string;
+  sinopsis?: string;
+  genre?: string;
+  coverUrl?: string;
+}
+
+// Catatan: `PATCH /books/:id` TIDAK menerima `slug` (kontrak backend) — slug
+// hanya ditentukan saat create, jadi tidak masuk payload update.
+export interface UpdateBookPayload {
+  judul?: string;
+  sinopsis?: string;
+  genre?: string;
+  coverUrl?: string;
+  status?: BookStatus;
+}
+
+export interface Chapter {
+  id: string;
+  bookId: string;
+  judul: string;
+  konten: string | null;
+  orderIndex: number;
+  status: ChapterStatus;
+  contentVersion: number;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateChapterPayload {
+  judul: string;
+  konten?: string;
+}
+
+export interface UpdateChapterPayload {
+  judul?: string;
+  konten?: string;
+  status?: ChapterStatus;
+}
+
+export interface ReorderChapterItem {
+  id: string;
+  orderIndex: number;
+}
+
+export interface ReorderChapterPayload {
+  items: ReorderChapterItem[];
+}
