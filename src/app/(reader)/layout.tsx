@@ -33,13 +33,33 @@ export default function ReaderLayout({ children }: { children: ReactNode }) {
             Novelo
           </Link>
 
-          <form action="/" method="get" className="order-3 w-full sm:order-none sm:max-w-md sm:flex-1">
+          <form
+            action="/"
+            method="get"
+            className="order-3 flex w-full items-center gap-1.5 sm:order-none sm:max-w-md sm:flex-1"
+          >
             <input
               type="search"
               name="search"
-              placeholder="Cari judul cerita…"
+              placeholder="Cari cerita…"
               className="w-full rounded-full border border-[var(--reader-border)] bg-[var(--reader-bg)] px-4 py-1.5 text-sm text-[var(--reader-foreground)] placeholder:text-[var(--reader-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--reader-terracotta)]/40"
             />
+            {/* Field terpisah dari filter genre di bawah — ini menentukan
+                field mana yang dicocokkan pencarian, bukan kategori cerita.
+                Tanpa `defaultValue` dari searchParams (sama seperti input
+                `search` di atas) karena layout App Router tidak menerima
+                prop searchParams — nilai yang dipilih tetap dikirim & di-
+                proses benar di page.tsx, cuma dropdown-nya reset visual
+                tiap navigasi baru (konsisten dgn perilaku input search saat ini). */}
+            <select
+              name="searchBy"
+              defaultValue="judul"
+              className="shrink-0 rounded-full border border-[var(--reader-border)] bg-[var(--reader-bg)] px-2 py-1.5 text-xs text-[var(--reader-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--reader-terracotta)]/40"
+            >
+              <option value="judul">Judul</option>
+              <option value="library">Penulis</option>
+              <option value="originalAuthor">Penulis Asli</option>
+            </select>
           </form>
 
           <div className="ml-auto">

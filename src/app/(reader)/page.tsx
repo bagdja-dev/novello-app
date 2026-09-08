@@ -13,8 +13,17 @@ export const metadata: Metadata = {
 
 const PAGE_LIMIT = 24;
 
+type CatalogSearchBy = 'judul' | 'library' | 'originalAuthor';
+const VALID_SEARCH_BY: CatalogSearchBy[] = ['judul', 'library', 'originalAuthor'];
+const SEARCH_BY_DESCRIPTION: Record<CatalogSearchBy, string> = {
+  judul: 'judul',
+  library: 'penulis',
+  originalAuthor: 'penulis asli',
+};
+
 interface CatalogSearchParams {
   search?: string;
+  searchBy?: string;
   genre?: string;
   page?: string;
 }
@@ -28,11 +37,15 @@ export default async function CatalogPage({
 }: {
   searchParams: Promise<CatalogSearchParams>;
 }) {
-  const { search = '', genre = '', page: pageParam = '1' } = await searchParams;
+  const { search = '', searchBy: searchByParam = '', genre = '', page: pageParam = '1' } = await searchParams;
   const page = Math.max(1, Number.parseInt(pageParam, 10) || 1);
+  const searchBy: CatalogSearchBy = VALID_SEARCH_BY.includes(searchByParam as CatalogSearchBy)
+    ? (searchByParam as CatalogSearchBy)
+    : 'judul';
 
   const query = new URLSearchParams();
   if (search) query.set('search', search);
+  if (search && searchBy !== 'judul') query.set('searchBy', searchBy);
   if (genre) query.set('genre', genre);
   query.set('page', String(page));
   query.set('limit', String(PAGE_LIMIT));
@@ -49,6 +62,7 @@ export default async function CatalogPage({
   function pageHref(targetPage: number) {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
+    if (search && searchBy !== 'judul') params.set('searchBy', searchBy);
     if (genre) params.set('genre', genre);
     if (targetPage > 1) params.set('page', String(targetPage));
     const qs = params.toString();
@@ -58,6 +72,7 @@ export default async function CatalogPage({
   function genreHref(targetGenre: string) {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
+    if (search && searchBy !== 'judul') params.set('searchBy', searchBy);
     if (targetGenre) params.set('genre', targetGenre);
     const qs = params.toString();
     return qs ? `/?${qs}` : '/';
@@ -74,7 +89,7 @@ export default async function CatalogPage({
         </h1>
         <p className="mt-2 text-sm text-[var(--reader-muted)]">
           {total > 0
-            ? `${total} cerita dari para penulis Novelo${search ? ` untuk "${search}"` : ''}.`
+            ? `${total} cerita dari para penulis Novelo${search ? ` untuk ${SEARCH_BY_DESCRIPTION[searchBy]} "${search}"` : ''}.`
             : 'Temukan cerita baru untuk dibaca.'}
         </p>
       </div>
