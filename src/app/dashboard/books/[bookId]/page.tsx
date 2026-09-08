@@ -20,6 +20,8 @@ function ChapterRow({
   bookId,
   onMove,
   moving,
+  onTogglePublish,
+  publishingId,
 }: {
   chapter: Chapter;
   index: number;
@@ -27,7 +29,12 @@ function ChapterRow({
   bookId: string;
   onMove: (index: number, direction: -1 | 1) => void;
   moving: boolean;
+  onTogglePublish: (chapter: Chapter) => void;
+  publishingId: string | null;
 }) {
+  const isPublished = chapter.status === 'published';
+  const isPublishing = publishingId === chapter.id;
+
   return (
     <div className="flex items-center gap-3 rounded-lg border bg-card px-4 py-3">
       <span className="w-6 shrink-0 text-sm text-muted-foreground">{index + 1}</span>
@@ -43,6 +50,15 @@ function ChapterRow({
       <Badge variant={CHAPTER_STATUS_VARIANT[chapter.status]}>
         {CHAPTER_STATUS_LABEL[chapter.status]}
       </Badge>
+
+      <Button
+        variant={isPublished ? 'outline' : 'default'}
+        size="sm"
+        disabled={isPublishing}
+        onClick={() => onTogglePublish(chapter)}
+      >
+        {isPublishing ? 'Memproses…' : isPublished ? 'Batalkan Publish' : 'Publish'}
+      </Button>
 
       <div className="flex shrink-0 items-center gap-1">
         <Button
@@ -77,6 +93,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ bookId: s
   const [error, setError] = useState<string | null>(null);
   const [reordering, setReordering] = useState(false);
   const [creatingChapter, setCreatingChapter] = useState(false);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -124,6 +141,25 @@ export default function BookDetailPage({ params }: { params: Promise<{ bookId: s
       toast.error(err instanceof ApiError ? err.message : 'Gagal mengubah urutan Chapter.');
     } finally {
       setReordering(false);
+    }
+  }
+
+  async function handleTogglePublish(chapter: Chapter) {
+    const nextStatus = chapter.status === 'published' ? 'draft' : 'published';
+    setPublishingId(chapter.id);
+    try {
+      const updated = await apiClient<Chapter>(`/books/${bookId}/chapters/${chapter.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      setChapters((prev) => prev?.map((c) => (c.id === updated.id ? updated : c)) ?? prev);
+      toast.success(
+        nextStatus === 'published' ? 'Chapter dipublish.' : 'Publish dibatalkan, Chapter kembali ke draft.',
+      );
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Gagal mengubah status Chapter.');
+    } finally {
+      setPublishingId(null);
     }
   }
 
@@ -207,6 +243,8 @@ export default function BookDetailPage({ params }: { params: Promise<{ bookId: s
                 bookId={bookId}
                 onMove={handleMove}
                 moving={reordering}
+                onTogglePublish={handleTogglePublish}
+                publishingId={publishingId}
               />
             ))}
           </div>
