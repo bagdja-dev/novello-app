@@ -11,12 +11,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { slugify } from '@/lib/api-client';
 import { publicFetch } from '@/lib/public-api';
 import type { GenreDto } from '@/lib/public-types';
-import type { BookType } from '@/lib/types';
+import type { BookStatus, BookType } from '@/lib/types';
 
 const BOOK_TYPE_LABEL: Record<BookType, string> = {
   original: 'Karya Original',
   translation: 'Terjemahan',
   adaptation: 'Adaptasi',
+};
+
+const BOOK_STATUS_SELECT_LABEL: Record<BookStatus, string> = {
+  draft: 'Draft',
+  ongoing: 'Berlanjut (Ongoing)',
+  completed: 'Tamat (Completed)',
 };
 
 export interface BookFormValues {
@@ -27,6 +33,7 @@ export interface BookFormValues {
   coverUrl: string;
   bookType: BookType;
   originalAuthor: string;
+  status: BookStatus;
 }
 
 interface BookFormProps {
@@ -60,6 +67,7 @@ export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmi
   const [coverUploading, setCoverUploading] = useState(false);
   const [bookType, setBookType] = useState<BookType>(initialValues?.bookType ?? 'original');
   const [originalAuthor, setOriginalAuthor] = useState(initialValues?.originalAuthor ?? '');
+  const [status, setStatus] = useState<BookStatus>(initialValues?.status ?? 'draft');
 
   const [genres, setGenres] = useState<GenreDto[] | null>(null);
 
@@ -95,6 +103,7 @@ export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmi
       coverUrl: coverUrl.trim(),
       bookType,
       originalAuthor: originalAuthor.trim(),
+      status,
     });
   }
 
@@ -139,6 +148,27 @@ export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmi
           disabled={submitting}
         />
       </div>
+
+      {mode === 'edit' && (
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="status">Status Cerita</Label>
+          <Select value={status} onValueChange={(value) => setStatus(value as BookStatus)} disabled={submitting}>
+            <SelectTrigger id="status" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(BOOK_STATUS_SELECT_LABEL) as BookStatus[]).map((s) => (
+                <SelectItem key={s} value={s}>
+                  {BOOK_STATUS_SELECT_LABEL[s]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Progres cerita — beda dari saklar publish. Tampil ke pembaca di katalog & detail Book.
+          </p>
+        </div>
+      )}
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="genre">Genre</Label>

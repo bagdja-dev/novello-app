@@ -48,6 +48,7 @@ export default function EditBookPage({ params }: { params: Promise<{ bookId: str
         coverUrl: values.coverUrl,
         bookType: values.bookType,
         originalAuthor: values.originalAuthor,
+        status: values.status,
       };
       await apiClient<Book>(`/books/${bookId}`, {
         method: 'PATCH',
@@ -91,6 +92,7 @@ export default function EditBookPage({ params }: { params: Promise<{ bookId: str
               coverUrl: book.coverUrl ?? '',
               bookType: book.bookType,
               originalAuthor: book.originalAuthor ?? '',
+              status: book.status,
             }}
           />
         </CardContent>
