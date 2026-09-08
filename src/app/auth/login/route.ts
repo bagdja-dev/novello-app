@@ -23,13 +23,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/?error=server_misconfigured', request.url));
   }
 
-  // forceLogin: true — selalu tampilkan form login bagdja-login, JANGAN
-  // silent-approve pakai sesi SSO (`bagdja_auth_token`) yang mungkin masih
-  // ada dari login sebelumnya (produk Bagdja lain, atau sesi lama di
-  // browser yang sama). `prompt=login` dihonor bagdja-login dengan clear
-  // cookie SSO + paksa balik ke form (lihat
-  // core/bagdja-login/src/app/oauth/authorize/route.ts) — mekanisme resmi
-  // yang sama dipakai untuk "mobile logout flow", bukan workaround.
-  const authorizeUrl = buildAuthorizeUrl(stateId, codeChallenge, true);
+  // TIDAK pakai forceLogin — dicoba sebelumnya (prompt=login) tapi ternyata
+  // (a) auction-web/website-admin/pos-admin juga tidak pakainya (silent-SSO
+  // memang pola standar ekosistem, lihat "Masuk"/"Mulai Sekarang" di
+  // bagdja-pos-admin — keduanya cuma link polos ke /auth/login, sama
+  // persis), dan (b) parameter `prompt` toh di-drop oleh bagdja-auth
+  // (core/bagdja-auth/src/auth/oauth.controller.ts method authorize() —
+  // tidak diteruskan ke bagdja-login) jadi tidak pernah benar-benar
+  // berfungsi. Silent-SSO across produk Bagdja adalah perilaku yang
+  // diharapkan, bukan bug.
+  const authorizeUrl = buildAuthorizeUrl(stateId, codeChallenge);
   return NextResponse.redirect(authorizeUrl);
 }
