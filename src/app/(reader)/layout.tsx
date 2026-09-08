@@ -57,11 +57,12 @@ export default async function ReaderLayout({ children }: { children: ReactNode }
             className="flex items-center gap-2 text-xl font-semibold tracking-tight text-[var(--reader-terracotta)]"
             style={{ fontFamily: 'var(--font-source-serif)' }}
           >
-            {config.logo && (
+            {config.logo ? (
               // eslint-disable-next-line @next/next/no-img-element -- logo dari URL config bebas domain, bukan aset lokal
               <img src={config.logo} alt={config.title} className="h-7 w-auto" />
+            ) : (
+              config.title
             )}
-            {config.title}
           </Link>
 
           <SearchBar />
