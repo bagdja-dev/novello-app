@@ -41,7 +41,7 @@ export function BookCard({ book }: { book: BookCatalogDto }) {
         <div className="mt-auto flex flex-wrap items-center gap-2 pt-1">
           {book.genre && (
             <span className="rounded-full bg-[var(--reader-bg)] px-2 py-0.5 text-[11px] text-[var(--reader-muted)]">
-              {book.genre}
+              {book.genre.nama}
             </span>
           )}
           <span className="flex items-center gap-1 text-[11px] text-[var(--reader-muted)]">

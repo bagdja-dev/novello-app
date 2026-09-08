@@ -3,9 +3,8 @@ import Link from 'next/link';
 
 import { BookCard } from '@/components/reader/book-card';
 import { ContinueReadingSection } from '@/components/reader/continue-reading-section';
-import { READER_GENRES } from '@/lib/genres';
 import { publicFetch } from '@/lib/public-api';
-import type { CatalogResponse } from '@/lib/public-types';
+import type { CatalogResponse, GenreDto } from '@/lib/public-types';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
@@ -39,8 +38,12 @@ export default async function CatalogPage({
   query.set('page', String(page));
   query.set('limit', String(PAGE_LIMIT));
 
-  const catalog = await publicFetch<CatalogResponse>(`/public/catalog?${query.toString()}`);
+  const [catalog, genres] = await Promise.all([
+    publicFetch<CatalogResponse>(`/public/catalog?${query.toString()}`),
+    publicFetch<GenreDto[]>('/public/genres'),
+  ]);
   const items = catalog?.items ?? [];
+  const genreList = genres ?? [];
   const total = catalog?.total ?? 0;
   const totalPages = catalog ? Math.max(1, Math.ceil(total / (catalog.limit || PAGE_LIMIT))) : 1;
 
@@ -91,18 +94,18 @@ export default async function CatalogPage({
         >
           Semua Genre
         </Link>
-        {READER_GENRES.map((g) => (
+        {genreList.map((g) => (
           <Link
-            key={g}
-            href={genreHref(g)}
+            key={g.id}
+            href={genreHref(g.slug)}
             className={cn(
               'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-              genre === g
+              genre === g.slug
                 ? 'border-[var(--reader-terracotta)] bg-[var(--reader-terracotta)] text-[var(--reader-terracotta-foreground)]'
                 : 'border-[var(--reader-border)] bg-[var(--reader-surface)] text-[var(--reader-muted)] hover:border-[var(--reader-terracotta)] hover:text-[var(--reader-terracotta)]',
             )}
           >
-            {g}
+            {g.nama}
           </Link>
         ))}
       </div>

@@ -25,7 +25,7 @@ export default function NewBookPage() {
         judul: values.judul,
         slug: values.slug,
         ...(values.sinopsis ? { sinopsis: values.sinopsis } : {}),
-        ...(values.genre ? { genre: values.genre } : {}),
+        ...(values.genreId ? { genreId: values.genreId } : {}),
         ...(values.coverUrl ? { coverUrl: values.coverUrl } : {}),
       };
       const book = await apiClient<Book>('/books', {

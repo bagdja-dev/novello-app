@@ -76,7 +76,7 @@ export default async function BookDetailPage({ params }: BookPageProps) {
             <Badge variant={BOOK_STATUS_VARIANT[book.status]}>{BOOK_STATUS_LABEL[book.status]}</Badge>
             {book.genre && (
               <span className="rounded-full bg-[var(--reader-bg)] px-2.5 py-0.5 text-xs text-[var(--reader-muted)]">
-                {book.genre}
+                {book.genre.nama}
               </span>
             )}
             <span className="text-xs text-[var(--reader-muted)]">{book.chapters.length} chapter</span>

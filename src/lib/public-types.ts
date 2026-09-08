@@ -9,12 +9,19 @@
  */
 import type { BookStatus } from './types';
 
+/** Kontrak `GET /public/genres` — daftar genre resmi dari database (bukan lagi hardcode frontend). */
+export interface GenreDto {
+  id: string;
+  nama: string;
+  slug: string;
+}
+
 export interface BookCatalogDto {
   id: string;
   judul: string;
   slug: string;
   sinopsis: string | null;
-  genre: string | null;
+  genre: GenreDto | null;
   coverUrl: string | null;
   status: BookStatus;
   library: {
@@ -52,7 +59,7 @@ export interface BookDetailDto {
   judul: string;
   slug: string;
   sinopsis: string | null;
-  genre: string | null;
+  genre: GenreDto | null;
   coverUrl: string | null;
   status: BookStatus;
   library: {

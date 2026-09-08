@@ -50,7 +50,7 @@ function BookGrid({ books }: { books: Book[] }) {
               </Badge>
               {book.genre && (
                 <Badge variant="outline" className="text-muted-foreground">
-                  {book.genre}
+                  {book.genre.nama}
                 </Badge>
               )}
             </div>

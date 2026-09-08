@@ -1,31 +1,21 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { slugify } from '@/lib/api-client';
-
-const GENRE_SUGGESTIONS = [
-  'Romance',
-  'Fantasi',
-  'Fiksi Ilmiah',
-  'Horor',
-  'Misteri',
-  'Aksi',
-  'Drama',
-  'Komedi',
-  'Slice of Life',
-  'Non-Fiksi',
-];
+import { publicFetch } from '@/lib/public-api';
+import type { GenreDto } from '@/lib/public-types';
 
 export interface BookFormValues {
   judul: string;
   slug: string;
   sinopsis: string;
-  genre: string;
+  genreId: string;
   coverUrl: string;
 }
 
@@ -45,14 +35,30 @@ interface BookFormProps {
  *
  * Slug hanya bisa diisi/diedit saat create — kontrak `PATCH /books/:id`
  * TIDAK menerima `slug`, jadi di mode edit field-nya read-only.
+ *
+ * Genre diambil dari `GET /public/genres` (endpoint publik, tanpa auth) —
+ * bukan lagi hardcode di frontend. Value yang dikirim ke backend adalah
+ * `genreId` (UUID), bukan nama genre bebas.
  */
 export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmit }: BookFormProps) {
   const [judul, setJudul] = useState(initialValues?.judul ?? '');
   const [slug, setSlug] = useState(initialValues?.slug ?? '');
   const [slugTouched, setSlugTouched] = useState(mode === 'edit');
   const [sinopsis, setSinopsis] = useState(initialValues?.sinopsis ?? '');
-  const [genre, setGenre] = useState(initialValues?.genre ?? '');
+  const [genreId, setGenreId] = useState(initialValues?.genreId ?? '');
   const [coverUrl, setCoverUrl] = useState(initialValues?.coverUrl ?? '');
+
+  const [genres, setGenres] = useState<GenreDto[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    publicFetch<GenreDto[]>('/public/genres').then((data) => {
+      if (!cancelled) setGenres(data ?? []);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function handleJudulChange(value: string) {
     setJudul(value);
@@ -72,7 +78,7 @@ export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmi
       judul: judul.trim(),
       slug: slug.trim(),
       sinopsis: sinopsis.trim(),
-      genre: genre.trim(),
+      genreId,
       coverUrl: coverUrl.trim(),
     });
   }
@@ -121,19 +127,25 @@ export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmi
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="genre">Genre</Label>
-        <Input
-          id="genre"
-          list="genre-suggestions"
-          value={genre}
-          onChange={(e) => setGenre(e.target.value)}
-          placeholder="mis. Fantasi"
-          disabled={submitting}
-        />
-        <datalist id="genre-suggestions">
-          {GENRE_SUGGESTIONS.map((g) => (
-            <option key={g} value={g} />
-          ))}
-        </datalist>
+        <Select
+          value={genreId || undefined}
+          onValueChange={(value) => setGenreId(value)}
+          disabled={submitting || !genres}
+        >
+          <SelectTrigger id="genre" className="w-full">
+            <SelectValue placeholder={genres ? 'Pilih genre (opsional)' : 'Memuat genre…'} />
+          </SelectTrigger>
+          <SelectContent>
+            {(genres ?? []).map((g) => (
+              <SelectItem key={g.id} value={g.id}>
+                {g.nama}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {genres && genres.length === 0 && (
+          <p className="text-xs text-muted-foreground">Belum ada genre tersedia.</p>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">

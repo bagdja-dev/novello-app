@@ -166,7 +166,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ bookId: s
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-lg font-semibold">{book.judul}</h1>
               <Badge variant={BOOK_STATUS_VARIANT[book.status]}>{BOOK_STATUS_LABEL[book.status]}</Badge>
-              {book.genre && <Badge variant="outline">{book.genre}</Badge>}
+              {book.genre && <Badge variant="outline">{book.genre.nama}</Badge>}
             </div>
             {book.sinopsis && (
               <p className="max-w-2xl text-sm text-muted-foreground">{book.sinopsis}</p>

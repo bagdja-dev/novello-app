@@ -44,7 +44,7 @@ export default function EditBookPage({ params }: { params: Promise<{ bookId: str
       const payload: UpdateBookPayload = {
         judul: values.judul,
         sinopsis: values.sinopsis,
-        genre: values.genre,
+        genreId: values.genreId,
         coverUrl: values.coverUrl,
       };
       await apiClient<Book>(`/books/${bookId}`, {
@@ -85,7 +85,7 @@ export default function EditBookPage({ params }: { params: Promise<{ bookId: str
               judul: book.judul,
               slug: book.slug,
               sinopsis: book.sinopsis ?? '',
-              genre: book.genre ?? '',
+              genreId: book.genre?.id ?? '',
               coverUrl: book.coverUrl ?? '',
             }}
           />
