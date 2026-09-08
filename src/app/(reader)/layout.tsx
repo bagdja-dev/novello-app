@@ -67,7 +67,7 @@ export default async function ReaderLayout({ children }: { children: ReactNode }
           <SearchBar />
 
           <div className="ml-auto">
-            <ReaderAuthNav />
+            <ReaderAuthNav lockStudio={config.lockStudio} />
           </div>
         </div>
       </header>

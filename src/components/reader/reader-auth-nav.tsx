@@ -11,7 +11,17 @@ import { useAuth } from '@/hooks/use-auth';
  * Server Component murni (SSR penuh untuk SEO). `useAuth` baca cookie
  * `ns_user` di browser, sama seperti dipakai Topbar Studio.
  */
-export function ReaderAuthNav() {
+interface ReaderAuthNavProps {
+  /**
+   * `platform_config.lockStudio` (di-SSR dari `(reader)/layout.tsx`, sudah
+   * fetch config sekali di server — diteruskan sebagai prop di sini supaya
+   * tidak fetch ulang di client & tidak ada flash tombol "Untuk Penulis"
+   * sebelum config kebaca).
+   */
+  lockStudio: boolean;
+}
+
+export function ReaderAuthNav({ lockStudio }: ReaderAuthNavProps) {
   const { isLoggedIn, loading } = useAuth();
   const pathname = usePathname();
 
@@ -67,12 +77,14 @@ export function ReaderAuthNav() {
       >
         Masuk
       </a>
-      <a
-        href="/auth/login?next=/dashboard"
-        className="rounded-full bg-[var(--reader-terracotta)] px-4 py-1.5 font-medium text-[var(--reader-terracotta-foreground)] transition-opacity hover:opacity-90"
-      >
-        Untuk Penulis
-      </a>
+      {!lockStudio && (
+        <a
+          href="/auth/login?next=/dashboard"
+          className="rounded-full bg-[var(--reader-terracotta)] px-4 py-1.5 font-medium text-[var(--reader-terracotta-foreground)] transition-opacity hover:opacity-90"
+        >
+          Untuk Penulis
+        </a>
+      )}
     </nav>
   );
 }
