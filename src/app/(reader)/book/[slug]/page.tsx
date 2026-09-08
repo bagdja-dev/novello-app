@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { BookOpen } from 'lucide-react';
-
+import { ContinueReadingButton } from '@/components/reader/continue-reading-button';
 import { Badge } from '@/components/ui/badge';
 import { BOOK_STATUS_LABEL, BOOK_STATUS_VARIANT } from '@/lib/status';
 import { publicFetch } from '@/lib/public-api';
@@ -88,13 +87,11 @@ export default async function BookDetailPage({ params }: BookPageProps) {
           )}
 
           {firstChapter && (
-            <Link
-              href={`/book/${book.slug}/chapter/${firstChapter.orderIndex}`}
-              className="mt-2 flex w-fit items-center gap-2 rounded-full bg-[var(--reader-terracotta)] px-5 py-2 text-sm font-medium text-[var(--reader-terracotta-foreground)] transition-opacity hover:opacity-90"
-            >
-              <BookOpen className="h-4 w-4" />
-              Mulai Baca
-            </Link>
+            <ContinueReadingButton
+              bookId={book.id}
+              slug={book.slug}
+              firstChapterOrderIndex={firstChapter.orderIndex}
+            />
           )}
         </div>
       </div>

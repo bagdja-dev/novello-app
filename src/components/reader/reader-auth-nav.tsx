@@ -21,6 +21,12 @@ export function ReaderAuthNav() {
     return (
       <nav className="flex items-center gap-4 text-sm">
         <Link
+          href="/my/highlights"
+          className="text-[var(--reader-muted)] transition-colors hover:text-[var(--reader-terracotta)]"
+        >
+          Highlight Saya
+        </Link>
+        <Link
           href="/dashboard"
           className="font-medium text-[var(--reader-foreground)] transition-colors hover:text-[var(--reader-terracotta)]"
         >

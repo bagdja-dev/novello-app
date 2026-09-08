@@ -5,6 +5,8 @@ import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { publicFetch } from '@/lib/public-api';
 import type { ChapterReadDto } from '@/lib/public-types';
+import { HighlightableChapter } from '@/components/highlightable-chapter';
+import { ReadingProgressTracker } from '@/components/reading-progress-tracker';
 
 interface ChapterPageProps {
   params: Promise<{ slug: string; orderIndex: string }>;
@@ -34,6 +36,8 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
 
   return (
     <div className="mx-auto max-w-[680px] px-4 py-8 sm:px-6">
+      <ReadingProgressTracker bookId={chapter.book.id} chapterId={chapter.id} />
+
       <Link
         href={`/book/${slug}`}
         className="mb-6 inline-flex items-center gap-1.5 text-sm text-[var(--reader-muted)] hover:text-[var(--reader-terracotta)]"
@@ -49,10 +53,12 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
         {chapter.orderIndex}. {chapter.judul}
       </h1>
 
-      <div
+      <HighlightableChapter
+        key={chapter.id}
+        chapterId={chapter.id}
+        konten={chapter.konten}
         className="chapter-content text-[1.0625rem] leading-[1.9] text-[var(--reader-foreground)]"
         style={{ fontFamily: 'var(--font-source-serif)' }}
-        dangerouslySetInnerHTML={{ __html: chapter.konten }}
       />
 
       <nav className="mt-12 flex items-center justify-between gap-4 border-t border-[var(--reader-border)] pt-6">

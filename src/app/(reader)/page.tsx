@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { BookCard } from '@/components/reader/book-card';
+import { ContinueReadingSection } from '@/components/reader/continue-reading-section';
 import { READER_GENRES } from '@/lib/genres';
 import { publicFetch } from '@/lib/public-api';
 import type { CatalogResponse } from '@/lib/public-types';
@@ -75,6 +76,8 @@ export default async function CatalogPage({
             : 'Temukan cerita baru untuk dibaca.'}
         </p>
       </div>
+
+      <ContinueReadingSection />
 
       <div className="mb-8 flex flex-wrap items-center gap-2">
         <Link

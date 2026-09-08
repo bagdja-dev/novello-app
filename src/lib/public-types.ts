@@ -69,6 +69,10 @@ export interface ChapterReadDto {
   orderIndex: number;
   publishedAt: string | null;
   book: {
+    // `id` ditambahkan backend di Fase 3 — dibutuhkan reader untuk memanggil
+    // `PUT /reading-progress` (butuh `bookId`). Backend mungkin belum kirim
+    // field ini saat kode ini ditulis; tetap dideklarasikan sesuai kontrak.
+    id: string;
     judul: string;
     slug: string;
   };
