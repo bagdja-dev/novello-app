@@ -19,10 +19,16 @@ export function getLoginUrl(): string {
 
 /**
  * Build SSO logout URL — clears bagdja_auth_token cookie on login.bagdja.com
- * then redirects back to the app landing page.
+ * then redirects back to the app landing page (root `/`, katalog publik).
+ *
+ * PENTING: endpoint asli di bagdja-auth ada di prefix controller `oauth`
+ * (`@Controller('oauth')` + `@Get('logout')` — lihat
+ * core/bagdja-auth/src/auth/oauth.controller.ts), jadi path-nya
+ * `/oauth/logout`, BUKAN `/logout` — salah path sebelumnya bikin 404
+ * "Cannot GET /logout" alih-alih redirect balik ke app.
  */
 export function buildSsoLogoutUrl(returnTo?: string): string {
-  const url = new URL('/logout', getLoginUrl());
+  const url = new URL('/oauth/logout', getLoginUrl());
   url.searchParams.set('redirect_uri', returnTo ?? getAppUrl());
   return url.toString();
 }
