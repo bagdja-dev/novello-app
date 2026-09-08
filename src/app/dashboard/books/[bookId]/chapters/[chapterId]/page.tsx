@@ -2,6 +2,7 @@
 
 import { use, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   AlertCircle,
@@ -11,6 +12,8 @@ import {
   Loader2,
   Maximize2,
   Minimize2,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 
 import { LoadingSpinner } from '@/components/loading-spinner';
@@ -60,6 +63,7 @@ export default function ChapterEditorPage({
   params: Promise<{ bookId: string; chapterId: string }>;
 }) {
   const { bookId, chapterId } = use(params);
+  const router = useRouter();
 
   const [chapters, setChapters] = useState<Chapter[] | null>(null);
   const [chapter, setChapter] = useState<Chapter | null>(null);
@@ -69,6 +73,8 @@ export default function ChapterEditorPage({
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [publishing, setPublishing] = useState(false);
   const [distractionFree, setDistractionFree] = useState(false);
+  const [creatingChapter, setCreatingChapter] = useState(false);
+  const [deletingChapterId, setDeletingChapterId] = useState<string | null>(null);
 
   const skipAutosaveRef = useRef(true);
 
@@ -168,6 +174,51 @@ export default function ChapterEditorPage({
     }
   }
 
+  async function handleNewChapterFromSidebar() {
+    setCreatingChapter(true);
+    try {
+      const created = await apiClient<Chapter>(`/books/${bookId}/chapters`, {
+        method: 'POST',
+        body: JSON.stringify({ judul: 'Chapter Baru' }),
+      });
+      setChapters((prev) => (prev ? [...prev, created] : [created]));
+      router.push(`/dashboard/books/${bookId}/chapters/${created.id}`);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Gagal membuat Chapter baru.');
+    } finally {
+      setCreatingChapter(false);
+    }
+  }
+
+  async function handleDeleteChapter(target: Chapter) {
+    const confirmed = window.confirm(
+      `Hapus Chapter "${target.judul}"? Tindakan ini tidak bisa dibatalkan.`,
+    );
+    if (!confirmed) return;
+
+    setDeletingChapterId(target.id);
+    try {
+      await apiClient(`/books/${bookId}/chapters/${target.id}`, { method: 'DELETE' });
+      const remaining = (chapters ?? []).filter((c) => c.id !== target.id);
+      setChapters(remaining);
+      toast.success('Chapter dihapus.');
+
+      // Chapter yang sedang dibuka ikut terhapus — pindah ke Chapter lain
+      // yang tersisa, atau balik ke daftar Book kalau tidak ada lagi.
+      if (target.id === chapterId) {
+        if (remaining.length > 0) {
+          router.replace(`/dashboard/books/${bookId}/chapters/${remaining[0].id}`);
+        } else {
+          router.replace(`/dashboard/books/${bookId}`);
+        }
+      }
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Gagal menghapus Chapter.');
+    } finally {
+      setDeletingChapterId(null);
+    }
+  }
+
   if (error) {
     return <p className="text-sm text-destructive">Gagal memuat Chapter: {error}</p>;
   }
@@ -234,27 +285,52 @@ export default function ChapterEditorPage({
 
   const chapterSidebar = chapters && (
     <aside className="hidden w-64 shrink-0 flex-col overflow-y-auto border-r bg-card md:flex">
-      <div className="border-b px-3 py-3 text-xs font-semibold text-muted-foreground">
-        Chapter di Book ini
+      <div className="flex items-center justify-between border-b px-3 py-3">
+        <span className="text-xs font-semibold text-muted-foreground">Chapter di Book ini</span>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          title="Chapter baru"
+          disabled={creatingChapter}
+          onClick={handleNewChapterFromSidebar}
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
       </div>
       <nav className="flex flex-col gap-0.5 p-2">
         {chapters.map((c, i) => (
-          <Link
+          <div
             key={c.id}
-            href={`/dashboard/books/${bookId}/chapters/${c.id}`}
             className={cn(
-              'flex items-center gap-2 rounded-md px-2.5 py-2 text-sm',
+              'group flex items-center gap-1 rounded-md pl-2.5 pr-1 text-sm',
               c.id === chapterId
                 ? 'bg-accent text-accent-foreground'
                 : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
             )}
           >
-            <FileText className="h-3.5 w-3.5 shrink-0" />
-            <span className="min-w-0 flex-1 truncate">
-              {i + 1}. {c.judul}
-            </span>
-            {c.status === 'published' && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />}
-          </Link>
+            <Link
+              href={`/dashboard/books/${bookId}/chapters/${c.id}`}
+              className="flex min-w-0 flex-1 items-center gap-2 py-2"
+            >
+              <FileText className="h-3.5 w-3.5 shrink-0" />
+              <span className="min-w-0 flex-1 truncate">
+                {i + 1}. {c.judul}
+              </span>
+              {c.status === 'published' && (
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+              )}
+            </Link>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              title="Hapus Chapter"
+              disabled={deletingChapterId === c.id}
+              onClick={() => handleDeleteChapter(c)}
+              className="shrink-0 opacity-0 group-hover:opacity-100 hover:text-destructive"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         ))}
       </nav>
     </aside>
