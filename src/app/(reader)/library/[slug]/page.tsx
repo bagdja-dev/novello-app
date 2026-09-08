@@ -1,0 +1,79 @@
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+
+import { BookCard } from '@/components/reader/book-card';
+import { publicFetch } from '@/lib/public-api';
+import type { LibraryProfileDto } from '@/lib/public-types';
+
+interface LibraryPageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: LibraryPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const library = await publicFetch<LibraryProfileDto>(`/public/libraries/${slug}`);
+  if (!library) {
+    return { title: 'Library tidak ditemukan — Novelo' };
+  }
+  return {
+    title: `${library.nama} — Novelo`,
+    description: library.deskripsi ?? `Karya-karya dari ${library.nama} di Novelo.`,
+  };
+}
+
+export default async function LibraryProfilePage({ params }: LibraryPageProps) {
+  const { slug } = await params;
+  const library = await publicFetch<LibraryProfileDto>(`/public/libraries/${slug}`);
+
+  if (!library) {
+    notFound();
+  }
+
+  return (
+    <div>
+      <div className="border-b border-[var(--reader-border)] bg-[var(--reader-surface)]">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-10 sm:flex-row sm:items-center sm:px-6">
+          <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--reader-border)] bg-[var(--reader-bg)]">
+            {library.coverUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- cover dari URL bebas milik penulis
+              <img src={library.coverUrl} alt={library.nama} className="h-full w-full object-cover" />
+            ) : (
+              <span
+                className="text-3xl font-semibold text-[var(--reader-muted)]"
+                style={{ fontFamily: 'var(--font-source-serif)' }}
+              >
+                {library.nama.charAt(0).toUpperCase()}
+              </span>
+            )}
+          </div>
+          <div>
+            <h1
+              className="text-2xl font-semibold text-[var(--reader-foreground)] sm:text-3xl"
+              style={{ fontFamily: 'var(--font-source-serif)' }}
+            >
+              {library.nama}
+            </h1>
+            {library.deskripsi && (
+              <p className="mt-2 max-w-2xl text-sm text-[var(--reader-muted)]">{library.deskripsi}</p>
+            )}
+            <p className="mt-2 text-xs text-[var(--reader-muted)]">{library.books.length} cerita</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        {library.books.length === 0 ? (
+          <p className="rounded-lg border border-[var(--reader-border)] bg-[var(--reader-surface)] px-4 py-8 text-center text-sm text-[var(--reader-muted)]">
+            Belum ada cerita yang diterbitkan Library ini.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {library.books.map((book) => (
+              <BookCard key={book.id} book={book} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

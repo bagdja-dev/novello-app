@@ -3,8 +3,9 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
-  title: "Novelo Studio",
-  description: "CMS/dashboard penulis untuk Bagdja Novelo",
+  title: "Novelo — Baca & Tulis Cerita",
+  description:
+    "Novelo, platform Bagdja untuk membaca dan menulis novel/cerita berseri — katalog cerita dari berbagai penulis, baca gratis tanpa login.",
 };
 
 export default function RootLayout({

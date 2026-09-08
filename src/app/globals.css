@@ -123,3 +123,60 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ───────────────────────────────────────────────────────────────
+ * Reader (`(reader)/*`) — palet hangat-netral (terracotta/mustard/olive),
+ * SENGAJA dipisah dari token shadcn/ui di atas (dipakai rute /dashboard
+ * Studio) supaya perubahan tema reader tidak menyentuh tampilan Studio.
+ * Scoped ke class `.novelo-reader` yang dipasang di
+ * `app/(reader)/layout.tsx`. Lihat plan/novelo/overview.md §5 & wireframe
+ * Fase 2 yang sudah disetujui (font serif jadi hero untuk judul/teks baca).
+ * ─────────────────────────────────────────────────────────────── */
+.novelo-reader {
+  --reader-bg: #fbf6ee;
+  --reader-surface: #fffdf8;
+  --reader-foreground: #2c2114;
+  --reader-muted: #7a6c57;
+  --reader-border: #e6d9c3;
+  --reader-terracotta: #c1502e;
+  --reader-terracotta-foreground: #fdf8f0;
+  --reader-mustard: #d79a2c;
+  --reader-olive: #6b7a4c;
+
+  background-color: var(--reader-bg);
+  color: var(--reader-foreground);
+}
+
+/* Konten Chapter — HTML mentah dari TipTap (lihat rich-text-editor.tsx),
+ * belum ada @tailwindcss/typography di project ini, jadi styling dasar
+ * paragraf/heading/list ditulis manual di sini (sama pola dengan
+ * EDITOR_CONTENT_CLASS di rich-text-editor.tsx). */
+.chapter-content p {
+  margin-bottom: 1.25em;
+}
+.chapter-content h2 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  font-size: 1.25em;
+  font-weight: 700;
+}
+.chapter-content h3 {
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+.chapter-content ul,
+.chapter-content ol {
+  margin-bottom: 1.25em;
+  padding-left: 1.5em;
+}
+.chapter-content ul {
+  list-style-type: disc;
+}
+.chapter-content ol {
+  list-style-type: decimal;
+}
+.chapter-content li {
+  margin-bottom: 0.4em;
+}
