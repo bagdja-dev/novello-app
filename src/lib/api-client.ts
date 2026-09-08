@@ -33,6 +33,17 @@ export async function apiClient<T = unknown>(
     } catch {
       message = await res.text().catch(() => message);
     }
+
+    // 401 = sesi tidak valid (token expired/rusak) meski cookie `ns_user`
+    // (dibaca useAuth untuk status login di UI) masih ada — sudah beberapa
+    // kali kejadian saat testing: UI terlihat "login" tapi panggilan API
+    // gagal diam-diam. Redirect ke login (bukan cuma throw error) supaya
+    // pengguna langsung tahu harus login ulang, next= balik ke halaman ini.
+    if (res.status === 401 && typeof window !== 'undefined') {
+      const next = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `/auth/login?next=${next}`;
+    }
+
     throw new ApiError(message, res.status);
   }
 
