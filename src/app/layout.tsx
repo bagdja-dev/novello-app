@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: `${config.title} — Baca & Tulis Cerita`,
-    description: `${config.title}, platform Bagdja untuk membaca dan menulis novel/cerita berseri — katalog cerita dari berbagai penulis, baca gratis tanpa login.`,
+    description: `${config.title}, platform Bagdja untuk membaca dan menulis novel/cerita berseri — jelajahi katalog cerita dari berbagai penulis, buat akun gratis untuk mulai membaca.`,
     icons: config.favicon ? { icon: config.favicon } : undefined,
   };
 }

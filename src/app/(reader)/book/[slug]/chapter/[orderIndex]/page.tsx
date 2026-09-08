@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { getPlatformConfig, publicFetch } from '@/lib/public-api';
+import { getSession } from '@/lib/session';
 import type { ChapterReadDto } from '@/lib/public-types';
 import { HighlightableChapter } from '@/components/highlightable-chapter';
 import { ReadingProgressTracker } from '@/components/reading-progress-tracker';
@@ -29,8 +30,20 @@ export async function generateMetadata({ params }: ChapterPageProps): Promise<Me
 // Kolom teks baca — max-width dibatasi (~680px, ekuivalen 65-75
 // karakter/baris pada font serif ukuran ini), font serif jadi hero, line-
 // height lega. TIDAK ada toolbar tema/ukuran font/highlight — itu Fase 3.
+//
+// Guard login (disepakati 9 Sep 2026): katalog/detail Book/Library tetap
+// publik (discovery & SEO), tapi KONTEN chapter (halaman ini) wajib login —
+// dicek server-side via cookie `ns_token` (httpOnly, lihat lib/session.ts)
+// SEBELUM fetch konten, supaya tidak ada flash konten ke pengunjung yang
+// belum login (beda dari pola client-side redirect di reader-auth-nav.tsx).
 export default async function ChapterPage({ params }: ChapterPageProps) {
   const { slug, orderIndex } = await params;
+
+  const { token } = await getSession();
+  if (!token) {
+    redirect(`/auth/login?next=${encodeURIComponent(`/book/${slug}/chapter/${orderIndex}`)}`);
+  }
+
   const chapter = await publicFetch<ChapterReadDto>(`/public/books/${slug}/chapters/${orderIndex}`);
 
   if (!chapter) {
