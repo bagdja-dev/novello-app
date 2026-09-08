@@ -86,7 +86,7 @@ export function CoverImageUpload({
     <div className="flex flex-col gap-2">
       <Label htmlFor={id}>{label}</Label>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-        <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-input bg-muted">
+        <div className="flex h-36 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-input bg-muted">
           {preview || value ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={preview || value} alt={`Preview ${label}`} className="h-full w-full object-cover" />
