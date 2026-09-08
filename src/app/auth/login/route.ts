@@ -23,6 +23,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/?error=server_misconfigured', request.url));
   }
 
-  const authorizeUrl = buildAuthorizeUrl(stateId, codeChallenge);
+  // forceLogin: true — selalu tampilkan form login bagdja-login, JANGAN
+  // silent-approve pakai sesi SSO (`bagdja_auth_token`) yang mungkin masih
+  // ada dari login sebelumnya (produk Bagdja lain, atau sesi lama di
+  // browser yang sama). `prompt=login` dihonor bagdja-login dengan clear
+  // cookie SSO + paksa balik ke form (lihat
+  // core/bagdja-login/src/app/oauth/authorize/route.ts) — mekanisme resmi
+  // yang sama dipakai untuk "mobile logout flow", bukan workaround.
+  const authorizeUrl = buildAuthorizeUrl(stateId, codeChallenge, true);
   return NextResponse.redirect(authorizeUrl);
 }
