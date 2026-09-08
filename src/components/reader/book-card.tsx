@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { BOOK_STATUS_LABEL } from '@/lib/status';
+import { BOOK_TYPE_BADGE_LABEL, formatBookByline } from '@/lib/book-byline';
 import type { BookCatalogDto } from '@/lib/public-types';
 
 const STATUS_DOT: Record<BookCatalogDto['status'], string> = {
@@ -37,8 +38,13 @@ export function BookCard({ book }: { book: BookCatalogDto }) {
         >
           {book.judul}
         </h3>
-        <p className="text-xs text-[var(--reader-muted)]">oleh {book.library.nama}</p>
+        <p className="text-xs text-[var(--reader-muted)]">{formatBookByline(book)}</p>
         <div className="mt-auto flex flex-wrap items-center gap-2 pt-1">
+          {book.bookType !== 'original' && (
+            <span className="rounded-full bg-[var(--reader-terracotta)]/10 px-2 py-0.5 text-[11px] font-medium text-[var(--reader-terracotta)]">
+              {BOOK_TYPE_BADGE_LABEL[book.bookType]}
+            </span>
+          )}
           {book.genre && (
             <span className="rounded-full bg-[var(--reader-bg)] px-2 py-0.5 text-[11px] text-[var(--reader-muted)]">
               {book.genre.nama}

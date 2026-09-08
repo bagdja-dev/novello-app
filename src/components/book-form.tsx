@@ -11,6 +11,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { slugify } from '@/lib/api-client';
 import { publicFetch } from '@/lib/public-api';
 import type { GenreDto } from '@/lib/public-types';
+import type { BookType } from '@/lib/types';
+
+const BOOK_TYPE_LABEL: Record<BookType, string> = {
+  original: 'Karya Original',
+  translation: 'Terjemahan',
+  adaptation: 'Adaptasi',
+};
 
 export interface BookFormValues {
   judul: string;
@@ -18,6 +25,8 @@ export interface BookFormValues {
   sinopsis: string;
   genreId: string;
   coverUrl: string;
+  bookType: BookType;
+  originalAuthor: string;
 }
 
 interface BookFormProps {
@@ -49,6 +58,8 @@ export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmi
   const [genreId, setGenreId] = useState(initialValues?.genreId ?? '');
   const [coverUrl, setCoverUrl] = useState(initialValues?.coverUrl ?? '');
   const [coverUploading, setCoverUploading] = useState(false);
+  const [bookType, setBookType] = useState<BookType>(initialValues?.bookType ?? 'original');
+  const [originalAuthor, setOriginalAuthor] = useState(initialValues?.originalAuthor ?? '');
 
   const [genres, setGenres] = useState<GenreDto[] | null>(null);
 
@@ -82,6 +93,8 @@ export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmi
       sinopsis: sinopsis.trim(),
       genreId,
       coverUrl: coverUrl.trim(),
+      bookType,
+      originalAuthor: originalAuthor.trim(),
     });
   }
 
@@ -149,6 +162,39 @@ export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmi
           <p className="text-xs text-muted-foreground">Belum ada genre tersedia.</p>
         )}
       </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="bookType">Jenis Karya</Label>
+        <Select value={bookType} onValueChange={(value) => setBookType(value as BookType)} disabled={submitting}>
+          <SelectTrigger id="bookType" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(BOOK_TYPE_LABEL) as BookType[]).map((type) => (
+              <SelectItem key={type} value={type}>
+                {BOOK_TYPE_LABEL[type]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {bookType !== 'original' && (
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="originalAuthor">Penulis Asli</Label>
+          <Input
+            id="originalAuthor"
+            value={originalAuthor}
+            onChange={(e) => setOriginalAuthor(e.target.value)}
+            placeholder="mis. Jane Doe"
+            disabled={submitting}
+          />
+          <p className="text-xs text-muted-foreground">
+            Nama penulis karya asli yang kamu {bookType === 'translation' ? 'terjemahkan' : 'adaptasi'} — opsional,
+            tapi disarankan diisi.
+          </p>
+        </div>
+      )}
 
       <CoverImageUpload
         id="coverUrl"

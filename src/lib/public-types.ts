@@ -7,7 +7,7 @@
  * DTO publik beda — sudah termasuk relasi `library`/`chapters` yang di-embed,
  * bukan foreign key mentah.
  */
-import type { BookStatus } from './types';
+import type { BookStatus, BookType } from './types';
 
 /** Kontrak `GET /public/genres` — daftar genre resmi dari database (bukan lagi hardcode frontend). */
 export interface GenreDto {
@@ -24,6 +24,9 @@ export interface BookCatalogDto {
   genre: GenreDto | null;
   coverUrl: string | null;
   status: BookStatus;
+  bookType: BookType;
+  /** Nama penulis asli — relevan kalau `bookType` bukan 'original'. */
+  originalAuthor: string | null;
   library: {
     nama: string;
     slug: string;
@@ -62,6 +65,9 @@ export interface BookDetailDto {
   genre: GenreDto | null;
   coverUrl: string | null;
   status: BookStatus;
+  bookType: BookType;
+  /** Nama penulis asli — relevan kalau `bookType` bukan 'original'. */
+  originalAuthor: string | null;
   library: {
     nama: string;
     slug: string;

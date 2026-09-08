@@ -25,6 +25,8 @@ export interface CreateLibraryPayload {
 
 export type BookStatus = 'draft' | 'ongoing' | 'completed';
 export type ChapterStatus = 'draft' | 'published';
+/** original (default) / translation / adaptation — Book terjemahan/adaptasi karya orang lain. */
+export type BookType = 'original' | 'translation' | 'adaptation';
 
 export interface Book {
   id: string;
@@ -35,6 +37,9 @@ export interface Book {
   genre: GenreDto | null;
   coverUrl: string | null;
   status: BookStatus;
+  bookType: BookType;
+  /** Nama penulis asli — relevan kalau `bookType` bukan 'original'. */
+  originalAuthor: string | null;
   /** Saklar publikasi level Book, terpisah dari `status` di atas dan dari status publish per-Chapter. */
   publishedAt: string | null;
   createdAt: string;
@@ -47,6 +52,8 @@ export interface CreateBookPayload {
   sinopsis?: string;
   genreId?: string;
   coverUrl?: string;
+  bookType?: BookType;
+  originalAuthor?: string;
 }
 
 // Catatan: `PATCH /books/:id` TIDAK menerima `slug` (kontrak backend) — slug
@@ -58,6 +65,8 @@ export interface UpdateBookPayload {
   coverUrl?: string;
   status?: BookStatus;
   published?: boolean;
+  bookType?: BookType;
+  originalAuthor?: string | null;
 }
 
 export interface Chapter {

@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { ContinueReadingButton } from '@/components/reader/continue-reading-button';
 import { Badge } from '@/components/ui/badge';
 import { BOOK_STATUS_LABEL, BOOK_STATUS_VARIANT } from '@/lib/status';
+import { BOOK_TYPE_BADGE_LABEL, formatBookBylinePrefix } from '@/lib/book-byline';
 import { publicFetch } from '@/lib/public-api';
 import type { BookDetailDto } from '@/lib/public-types';
 
@@ -65,15 +66,23 @@ export default async function BookDetailPage({ params }: BookPageProps) {
             {book.judul}
           </h1>
 
-          <Link
-            href={`/library/${book.library.slug}`}
-            className="w-fit text-sm text-[var(--reader-muted)] underline-offset-2 hover:text-[var(--reader-terracotta)] hover:underline"
-          >
-            oleh {book.library.nama}
-          </Link>
+          <p className="w-fit text-sm text-[var(--reader-muted)]">
+            {formatBookBylinePrefix(book)}{' '}
+            <Link
+              href={`/library/${book.library.slug}`}
+              className="underline-offset-2 hover:text-[var(--reader-terracotta)] hover:underline"
+            >
+              {book.library.nama}
+            </Link>
+          </p>
 
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant={BOOK_STATUS_VARIANT[book.status]}>{BOOK_STATUS_LABEL[book.status]}</Badge>
+            {book.bookType !== 'original' && (
+              <span className="rounded-full bg-[var(--reader-terracotta)]/10 px-2.5 py-0.5 text-xs font-medium text-[var(--reader-terracotta)]">
+                {BOOK_TYPE_BADGE_LABEL[book.bookType]}
+              </span>
+            )}
             {book.genre && (
               <span className="rounded-full bg-[var(--reader-bg)] px-2.5 py-0.5 text-xs text-[var(--reader-muted)]">
                 {book.genre.nama}

@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { apiClient, ApiError } from '@/lib/api-client';
 import { BOOK_STATUS_LABEL, BOOK_STATUS_VARIANT, CHAPTER_STATUS_LABEL, CHAPTER_STATUS_VARIANT } from '@/lib/status';
+import { BOOK_TYPE_BADGE_LABEL } from '@/lib/book-byline';
 import type { Book, Chapter, ReorderChapterPayload } from '@/lib/types';
 
 function ChapterRow({
@@ -228,8 +229,14 @@ export default function BookDetailPage({ params }: { params: Promise<{ bookId: s
               <Badge variant={book.publishedAt ? 'default' : 'secondary'}>
                 {book.publishedAt ? 'Published' : 'Belum Dipublish'}
               </Badge>
+              {book.bookType !== 'original' && (
+                <Badge variant="outline">{BOOK_TYPE_BADGE_LABEL[book.bookType]}</Badge>
+              )}
               {book.genre && <Badge variant="outline">{book.genre.nama}</Badge>}
             </div>
+            {book.originalAuthor && (
+              <p className="text-sm text-muted-foreground">Penulis asli: {book.originalAuthor}</p>
+            )}
             {book.sinopsis && (
               <p className="max-w-2xl text-sm text-muted-foreground">{book.sinopsis}</p>
             )}
