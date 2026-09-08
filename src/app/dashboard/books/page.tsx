@@ -48,6 +48,9 @@ function BookGrid({ books }: { books: Book[] }) {
               <Badge variant={BOOK_STATUS_VARIANT[book.status]}>
                 {BOOK_STATUS_LABEL[book.status]}
               </Badge>
+              <Badge variant={book.publishedAt ? 'default' : 'secondary'}>
+                {book.publishedAt ? 'Published' : 'Belum Dipublish'}
+              </Badge>
               {book.genre && (
                 <Badge variant="outline" className="text-muted-foreground">
                   {book.genre.nama}
