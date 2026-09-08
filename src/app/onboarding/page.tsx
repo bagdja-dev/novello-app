@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/use-auth';
 import { useLibrary } from '@/hooks/use-library';
 import { apiClient, ApiError, slugify } from '@/lib/api-client';
+import { getPlatformConfig } from '@/lib/public-api';
 import type { CreateLibraryPayload, Library } from '@/lib/types';
 
 function AuthGuard({ children }: { children: ReactNode }) {
@@ -44,6 +45,18 @@ function OnboardingForm() {
   const [coverUrl, setCoverUrl] = useState('');
   const [coverUploading, setCoverUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [lockStudio, setLockStudio] = useState(false);
+  const [configLoading, setConfigLoading] = useState(true);
+
+  // platform_config.lockStudio (disepakati 9 Sep 2026) — kalau true, pendaftaran
+  // Library baru ditutup lewat form ini; satu-satunya jalur adalah insert manual
+  // ke DB oleh tim Bagdja. Dicek client-side (pola sama dengan fetch genre di
+  // book-form.tsx) karena halaman ini authenticated (`AuthGuard`), bukan SSR.
+  useEffect(() => {
+    getPlatformConfig()
+      .then((config) => setLockStudio(config.lockStudio))
+      .finally(() => setConfigLoading(false));
+  }, []);
 
   // Sudah punya Library (mis. buka /onboarding lagi lewat back button) →
   // tidak perlu isi form lagi, langsung ke dashboard.
@@ -95,8 +108,24 @@ function OnboardingForm() {
     }
   }
 
-  if (libraryLoading) {
+  if (libraryLoading || configLoading) {
     return <LoadingSpinner label="Memeriksa Library…" />;
+  }
+
+  if (lockStudio) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
+        <Card className="w-full max-w-lg">
+          <CardHeader>
+            <CardTitle className="text-xl">Pendaftaran sedang ditutup</CardTitle>
+            <CardDescription>
+              Pendaftaran penulis baru (pembuatan Library) sedang ditutup sementara. Hubungi
+              admin platform kalau kamu ingin mulai menulis di Novelo.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
   }
 
   return (

@@ -16,6 +16,31 @@ export interface GenreDto {
   slug: string;
 }
 
+export interface PlatformColors {
+  bg: string;
+  surface: string;
+  foreground: string;
+  muted: string;
+  border: string;
+  terracotta: string;
+  terracottaForeground: string;
+  mustard: string;
+  olive: string;
+}
+
+/**
+ * Kontrak `GET /public/config` — key-value platform (title/logo/colors/
+ * lockStudio), diedit langsung di DB (belum ada novelo-admin). Semua field
+ * PUNYA fallback di sisi frontend (lihat `getPlatformConfig()`) — jangan
+ * anggap request ini selalu sukses.
+ */
+export interface PlatformConfigDto {
+  title: string;
+  logo: string | null;
+  colors: PlatformColors;
+  lockStudio: boolean;
+}
+
 export interface BookCatalogDto {
   id: string;
   judul: string;
