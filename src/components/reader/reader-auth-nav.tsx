@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 import { useAuth } from '@/hooks/use-auth';
 
@@ -12,6 +13,7 @@ import { useAuth } from '@/hooks/use-auth';
  */
 export function ReaderAuthNav() {
   const { isLoggedIn, loading } = useAuth();
+  const pathname = usePathname();
 
   if (loading) {
     return <div className="h-8 w-28" aria-hidden />;
@@ -42,16 +44,25 @@ export function ReaderAuthNav() {
     );
   }
 
+  // "Masuk" -> balik ke halaman reader yang sedang dibuka setelah login,
+  // TIDAK lewat /dashboard sama sekali — supaya pembaca murni yang belum
+  // punya Library tidak ke-paksa proses onboarding (LibraryGuard cuma
+  // dipasang di /dashboard, jadi menghindarinya = tetap di reader).
+  // "Untuk Penulis" -> eksplisit ke /dashboard, yang sudah otomatis benar:
+  // LibraryGuard arahkan ke /onboarding (belum punya Library) atau
+  // langsung tampilkan dashboard (sudah punya).
+  const readerLoginHref = `/auth/login?next=${encodeURIComponent(pathname || '/')}`;
+
   return (
     <nav className="flex items-center gap-3 text-sm">
       <a
-        href="/auth/login"
+        href={readerLoginHref}
         className="text-[var(--reader-muted)] transition-colors hover:text-[var(--reader-terracotta)]"
       >
         Masuk
       </a>
       <a
-        href="/auth/login"
+        href="/auth/login?next=/dashboard"
         className="rounded-full bg-[var(--reader-terracotta)] px-4 py-1.5 font-medium text-[var(--reader-terracotta-foreground)] transition-opacity hover:opacity-90"
       >
         Untuk Penulis
