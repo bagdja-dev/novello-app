@@ -2,14 +2,17 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { BookCard } from '@/components/reader/book-card';
-import { publicFetch } from '@/lib/public-api';
+import { getPlatformConfig, publicFetch } from '@/lib/public-api';
 import type { CatalogResponse, GenreDto } from '@/lib/public-types';
 import { cn } from '@/lib/utils';
 
-export const metadata: Metadata = {
-  title: 'Novelo — Baca & Tulis Cerita',
-  description: 'Jelajahi katalog novel & cerita berseri dari berbagai penulis di Novelo.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const config = await getPlatformConfig();
+  return {
+    title: `${config.title} — Baca & Tulis Cerita`,
+    description: `Jelajahi katalog novel & cerita berseri dari berbagai penulis di ${config.title}.`,
+  };
+}
 
 const PAGE_LIMIT = 24;
 
@@ -50,7 +53,8 @@ export default async function CatalogPage({
   query.set('page', String(page));
   query.set('limit', String(PAGE_LIMIT));
 
-  const [catalog, genres] = await Promise.all([
+  const [config, catalog, genres] = await Promise.all([
+    getPlatformConfig(),
     publicFetch<CatalogResponse>(`/public/catalog?${query.toString()}`),
     publicFetch<GenreDto[]>('/public/genres'),
   ]);
@@ -89,7 +93,7 @@ export default async function CatalogPage({
         </h1>
         <p className="mt-2 text-sm text-[var(--reader-muted)]">
           {total > 0
-            ? `${total} cerita dari para penulis Novelo${search ? ` untuk ${SEARCH_BY_DESCRIPTION[searchBy]} "${search}"` : ''}.`
+            ? `${total} cerita dari para penulis ${config.title}${search ? ` untuk ${SEARCH_BY_DESCRIPTION[searchBy]} "${search}"` : ''}.`
             : 'Temukan cerita baru untuk dibaca.'}
         </p>
       </div>

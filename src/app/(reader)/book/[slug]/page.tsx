@@ -5,7 +5,7 @@ import { ContinueReadingButton } from '@/components/reader/continue-reading-butt
 import { Badge } from '@/components/ui/badge';
 import { BOOK_STATUS_LABEL, BOOK_STATUS_VARIANT } from '@/lib/status';
 import { BOOK_TYPE_BADGE_LABEL, formatBookBylinePrefix } from '@/lib/book-byline';
-import { publicFetch } from '@/lib/public-api';
+import { getPlatformConfig, publicFetch } from '@/lib/public-api';
 import type { BookDetailDto } from '@/lib/public-types';
 
 interface BookPageProps {
@@ -14,13 +14,16 @@ interface BookPageProps {
 
 export async function generateMetadata({ params }: BookPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const book = await publicFetch<BookDetailDto>(`/public/books/${slug}`);
+  const [config, book] = await Promise.all([
+    getPlatformConfig(),
+    publicFetch<BookDetailDto>(`/public/books/${slug}`),
+  ]);
   if (!book) {
-    return { title: 'Cerita tidak ditemukan — Novelo' };
+    return { title: `Cerita tidak ditemukan — ${config.title}` };
   }
   return {
-    title: `${book.judul} — Novelo`,
-    description: book.sinopsis ?? `Baca ${book.judul} oleh ${book.library.nama} di Novelo.`,
+    title: `${book.judul} — ${config.title}`,
+    description: book.sinopsis ?? `Baca ${book.judul} oleh ${book.library.nama} di ${config.title}.`,
   };
 }
 

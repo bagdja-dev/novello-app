@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { publicFetch } from '@/lib/public-api';
+import { getPlatformConfig, publicFetch } from '@/lib/public-api';
 import type { ChapterReadDto } from '@/lib/public-types';
 import { HighlightableChapter } from '@/components/highlightable-chapter';
 import { ReadingProgressTracker } from '@/components/reading-progress-tracker';
@@ -14,12 +14,15 @@ interface ChapterPageProps {
 
 export async function generateMetadata({ params }: ChapterPageProps): Promise<Metadata> {
   const { slug, orderIndex } = await params;
-  const chapter = await publicFetch<ChapterReadDto>(`/public/books/${slug}/chapters/${orderIndex}`);
+  const [config, chapter] = await Promise.all([
+    getPlatformConfig(),
+    publicFetch<ChapterReadDto>(`/public/books/${slug}/chapters/${orderIndex}`),
+  ]);
   if (!chapter) {
-    return { title: 'Chapter tidak ditemukan — Novelo' };
+    return { title: `Chapter tidak ditemukan — ${config.title}` };
   }
   return {
-    title: `${chapter.judul} — ${chapter.book.judul} — Novelo`,
+    title: `${chapter.judul} — ${chapter.book.judul} — ${config.title}`,
   };
 }
 

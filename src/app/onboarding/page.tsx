@@ -46,15 +46,20 @@ function OnboardingForm() {
   const [coverUploading, setCoverUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [lockStudio, setLockStudio] = useState(false);
+  const [platformTitle, setPlatformTitle] = useState('Novelo');
   const [configLoading, setConfigLoading] = useState(true);
 
   // platform_config.lockStudio (disepakati 9 Sep 2026) — kalau true, pendaftaran
   // Library baru ditutup lewat form ini; satu-satunya jalur adalah insert manual
   // ke DB oleh tim Bagdja. Dicek client-side (pola sama dengan fetch genre di
   // book-form.tsx) karena halaman ini authenticated (`AuthGuard`), bukan SSR.
+  // Sekalian ambil `title` supaya body copy di bawah tidak hardcode "Novelo".
   useEffect(() => {
     getPlatformConfig()
-      .then((config) => setLockStudio(config.lockStudio))
+      .then((config) => {
+        setLockStudio(config.lockStudio);
+        setPlatformTitle(config.title);
+      })
       .finally(() => setConfigLoading(false));
   }, []);
 
@@ -120,7 +125,7 @@ function OnboardingForm() {
             <CardTitle className="text-xl">Pendaftaran sedang ditutup</CardTitle>
             <CardDescription>
               Pendaftaran penulis baru (pembuatan Library) sedang ditutup sementara. Hubungi
-              admin platform kalau kamu ingin mulai menulis di Novelo.
+              admin platform kalau kamu ingin mulai menulis di {platformTitle}.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -134,8 +139,8 @@ function OnboardingForm() {
         <CardHeader>
           <CardTitle className="text-xl">Buat Library kamu</CardTitle>
           <CardDescription>
-            Library adalah ruang kerja penulis di Novelo — tempat kamu mengelola semua Book
-            & Chapter. Isi detail berikut untuk memulai.
+            Library adalah ruang kerja penulis di {platformTitle} — tempat kamu mengelola semua
+            Book & Chapter. Isi detail berikut untuk memulai.
           </CardDescription>
         </CardHeader>
         <CardContent>

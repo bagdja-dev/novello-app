@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { BookCard } from '@/components/reader/book-card';
-import { publicFetch } from '@/lib/public-api';
+import { getPlatformConfig, publicFetch } from '@/lib/public-api';
 import type { LibraryProfileDto } from '@/lib/public-types';
 
 interface LibraryPageProps {
@@ -11,13 +11,16 @@ interface LibraryPageProps {
 
 export async function generateMetadata({ params }: LibraryPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const library = await publicFetch<LibraryProfileDto>(`/public/libraries/${slug}`);
+  const [config, library] = await Promise.all([
+    getPlatformConfig(),
+    publicFetch<LibraryProfileDto>(`/public/libraries/${slug}`),
+  ]);
   if (!library) {
-    return { title: 'Library tidak ditemukan — Novelo' };
+    return { title: `Library tidak ditemukan — ${config.title}` };
   }
   return {
-    title: `${library.nama} — Novelo`,
-    description: library.deskripsi ?? `Karya-karya dari ${library.nama} di Novelo.`,
+    title: `${library.nama} — ${config.title}`,
+    description: library.deskripsi ?? `Karya-karya dari ${library.nama} di ${config.title}.`,
   };
 }
 
