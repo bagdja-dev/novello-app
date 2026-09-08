@@ -94,6 +94,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ bookId: s
   const [reordering, setReordering] = useState(false);
   const [creatingChapter, setCreatingChapter] = useState(false);
   const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [publishingBook, setPublishingBook] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -163,6 +164,28 @@ export default function BookDetailPage({ params }: { params: Promise<{ bookId: s
     }
   }
 
+  async function handleTogglePublishBook() {
+    if (!book) return;
+    const nextPublished = !book.publishedAt;
+    setPublishingBook(true);
+    try {
+      const updated = await apiClient<Book>(`/books/${bookId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ published: nextPublished }),
+      });
+      setBook(updated);
+      toast.success(
+        nextPublished
+          ? 'Book dipublish — akan muncul di katalog kalau sudah punya Chapter published.'
+          : 'Publish Book dibatalkan, Book disembunyikan dari katalog publik.',
+      );
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Gagal mengubah status publikasi Book.');
+    } finally {
+      setPublishingBook(false);
+    }
+  }
+
   async function handleNewChapter() {
     setCreatingChapter(true);
     try {
@@ -202,18 +225,34 @@ export default function BookDetailPage({ params }: { params: Promise<{ bookId: s
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-lg font-semibold">{book.judul}</h1>
               <Badge variant={BOOK_STATUS_VARIANT[book.status]}>{BOOK_STATUS_LABEL[book.status]}</Badge>
+              <Badge variant={book.publishedAt ? 'default' : 'secondary'}>
+                {book.publishedAt ? 'Published' : 'Belum Dipublish'}
+              </Badge>
               {book.genre && <Badge variant="outline">{book.genre.nama}</Badge>}
             </div>
             {book.sinopsis && (
               <p className="max-w-2xl text-sm text-muted-foreground">{book.sinopsis}</p>
             )}
           </div>
-          <Button variant="outline" asChild>
-            <Link href={`/dashboard/books/${bookId}/edit`}>
-              <Pencil className="h-4 w-4" />
-              Edit Book
-            </Link>
-          </Button>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              variant={book.publishedAt ? 'outline' : 'default'}
+              disabled={publishingBook}
+              onClick={handleTogglePublishBook}
+            >
+              {publishingBook
+                ? 'Memproses…'
+                : book.publishedAt
+                  ? 'Batalkan Publish Book'
+                  : 'Publish Book'}
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href={`/dashboard/books/${bookId}/edit`}>
+                <Pencil className="h-4 w-4" />
+                Edit Book
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
 

@@ -35,6 +35,8 @@ export interface Book {
   genre: GenreDto | null;
   coverUrl: string | null;
   status: BookStatus;
+  /** Saklar publikasi level Book, terpisah dari `status` di atas dan dari status publish per-Chapter. */
+  publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -55,6 +57,7 @@ export interface UpdateBookPayload {
   genreId?: string;
   coverUrl?: string;
   status?: BookStatus;
+  published?: boolean;
 }
 
 export interface Chapter {
