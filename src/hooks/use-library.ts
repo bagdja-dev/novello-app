@@ -23,10 +23,19 @@ export function useLibrary() {
     try {
       const data = await apiClient<Library | null>('/libraries/me');
       setLibrary(data ?? null);
+      setLoading(false);
     } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        // apiClient sudah trigger redirect ke /auth/login (window.location.href,
+        // lihat lib/api-client.ts) — sengaja TIDAK set error/loading=false di
+        // sini, biar LibraryGuard tetap tampil spinner (bukan layar "Gagal
+        // memuat Library" + tombol "Coba lagi" yang menyesatkan — retry
+        // percuma karena token memang sudah invalid) sampai navigasi browser
+        // benar-benar pindah ke halaman login.
+        return;
+      }
       setError(err instanceof ApiError ? err.message : 'Gagal memuat data Library');
       setLibrary(null);
-    } finally {
       setLoading(false);
     }
   }, []);
