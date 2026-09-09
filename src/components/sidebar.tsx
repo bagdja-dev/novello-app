@@ -14,18 +14,18 @@ const SETTINGS_ITEM = { href: '/dashboard/settings', label: 'Pengaturan', icon: 
 
 interface SidebarProps {
   title: string;
-  logo: string | null;
+  icon: string | null;
 }
 
-export function Sidebar({ title, logo }: SidebarProps) {
+export function Sidebar({ title, icon }: SidebarProps) {
   const pathname = usePathname();
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
       <div className="flex h-16 items-center gap-2 px-4">
-        {logo ? (
-          // eslint-disable-next-line @next/next/no-img-element -- logo dari URL config bebas domain, bukan aset lokal
-          <img src={logo} alt={title} className="h-8 w-8 shrink-0 rounded-lg object-cover" />
+        {icon ? (
+          // eslint-disable-next-line @next/next/no-img-element -- ikon dari URL config bebas domain, bukan aset lokal
+          <img src={icon} alt={title} className="h-8 w-8 shrink-0 rounded-lg object-cover" />
         ) : (
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <BookOpen className="h-4 w-4" />

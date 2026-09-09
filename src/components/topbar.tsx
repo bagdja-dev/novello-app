@@ -10,24 +10,24 @@ import type { Library } from '@/lib/types';
 interface TopbarProps {
   library: Library;
   title: string;
-  logo: string | null;
+  icon: string | null;
 }
 
-export function Topbar({ library, title, logo }: TopbarProps) {
+export function Topbar({ library, title, icon }: TopbarProps) {
   const { user } = useAuth();
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b px-4 sm:px-6">
       <div className="flex items-center gap-3">
-        {/* Sidebar (md+) sudah tampilkan logo platform — di sini cuma untuk
+        {/* Sidebar (md+) sudah tampilkan ikon platform — di sini cuma untuk
             layar kecil, di mana Sidebar disembunyikan total (lihat
             `hidden ... md:flex` di sidebar.tsx) sehingga tidak ada cara lain
             kembali ke situs utama dari Studio. Klik -> balik ke domain dasar
             (katalog publik), BUKAN Library profile penulis ini. */}
         <Link href="/" className="shrink-0 md:hidden">
-          {logo ? (
-            // eslint-disable-next-line @next/next/no-img-element -- logo dari URL config bebas domain, bukan aset lokal
-            <img src={logo} alt={title} className="h-8 w-8 rounded-lg object-cover" />
+          {icon ? (
+            // eslint-disable-next-line @next/next/no-img-element -- ikon dari URL config bebas domain, bukan aset lokal
+            <img src={icon} alt={title} className="h-8 w-8 rounded-lg object-cover" />
           ) : (
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <BookOpen className="h-4 w-4" />

@@ -68,22 +68,25 @@ function LibraryGuard({ children }: { children: ReactNode }) {
   return <LibraryProvider library={library}>{children}</LibraryProvider>;
 }
 
-// Sidebar & Topbar sama-sama butuh title/logo platform_config — di-fetch
+// Sidebar & Topbar sama-sama butuh title/icon platform_config — di-fetch
 // SEKALI di sini (bukan masing-masing komponen) supaya tidak ada 2 request
 // terpisah untuk data yang identik. Default sama dengan
 // PLATFORM_CONFIG_FALLBACK, cukup sebagai nilai awal sebelum config kebaca.
+// Sengaja pakai `favicon` (bukan `logo`) — dikonfirmasi eksplisit user:
+// badge kecil di Sidebar/Topbar pakai ikon persegi (favicon), `logo` (brand
+// mark lebar) khusus header reader.
 function DashboardShell({ children }: { children: ReactNode }) {
-  const [branding, setBranding] = useState({ title: 'Novelo', logo: null as string | null });
+  const [branding, setBranding] = useState({ title: 'Novelo', icon: null as string | null });
 
   useEffect(() => {
-    getPlatformConfig().then((config) => setBranding({ title: config.title, logo: config.logo }));
+    getPlatformConfig().then((config) => setBranding({ title: config.title, icon: config.favicon }));
   }, []);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar title={branding.title} logo={branding.logo} />
+      <Sidebar title={branding.title} icon={branding.icon} />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <DashboardTopbar title={branding.title} logo={branding.logo} />
+        <DashboardTopbar title={branding.title} icon={branding.icon} />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
@@ -92,9 +95,9 @@ function DashboardShell({ children }: { children: ReactNode }) {
 
 // Dipisah supaya bisa memanggil useLibraryContext() setelah LibraryProvider
 // terpasang (Topbar butuh data Library untuk header).
-function DashboardTopbar({ title, logo }: { title: string; logo: string | null }) {
+function DashboardTopbar({ title, icon }: { title: string; icon: string | null }) {
   const library = useLibraryContext();
-  return <Topbar library={library} title={title} logo={logo} />;
+  return <Topbar library={library} title={title} icon={icon} />;
 }
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
