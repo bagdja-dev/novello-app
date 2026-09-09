@@ -1,12 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BookOpen, Library, Settings } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { getPlatformConfig } from '@/lib/public-api';
 
 const NAV_ITEMS = [
   { href: '/dashboard/books', label: 'Book & Chapter', icon: Library },
@@ -14,24 +12,26 @@ const NAV_ITEMS = [
 
 const SETTINGS_ITEM = { href: '/dashboard/settings', label: 'Pengaturan', icon: Settings };
 
-export function Sidebar() {
-  const pathname = usePathname();
-  // Default 'Novelo' (sama dengan PLATFORM_CONFIG_FALLBACK.title) — cukup
-  // sebagai nilai awal sebelum config kebaca, tidak perlu loading state
-  // terpisah untuk chrome sidebar internal ini.
-  const [platformTitle, setPlatformTitle] = useState('Novelo');
+interface SidebarProps {
+  title: string;
+  logo: string | null;
+}
 
-  useEffect(() => {
-    getPlatformConfig().then((config) => setPlatformTitle(config.title));
-  }, []);
+export function Sidebar({ title, logo }: SidebarProps) {
+  const pathname = usePathname();
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
       <div className="flex h-16 items-center gap-2 px-4">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <BookOpen className="h-4 w-4" />
-        </div>
-        <span className="font-semibold">{platformTitle} Studio</span>
+        {logo ? (
+          // eslint-disable-next-line @next/next/no-img-element -- logo dari URL config bebas domain, bukan aset lokal
+          <img src={logo} alt={title} className="h-8 w-8 shrink-0 rounded-lg object-cover" />
+        ) : (
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <BookOpen className="h-4 w-4" />
+          </div>
+        )}
+        <span className="font-semibold">{title} Studio</span>
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 p-3">
