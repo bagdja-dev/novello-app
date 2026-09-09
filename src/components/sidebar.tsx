@@ -23,14 +23,18 @@ export function Sidebar({ title, icon }: SidebarProps) {
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
       <div className="flex h-16 items-center gap-2 px-4">
-        {icon ? (
-          // eslint-disable-next-line @next/next/no-img-element -- ikon dari URL config bebas domain, bukan aset lokal
-          <img src={icon} alt={title} className="h-8 w-8 shrink-0 rounded-lg object-cover" />
-        ) : (
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <BookOpen className="h-4 w-4" />
-          </div>
-        )}
+        {/* Klik ikon -> balik ke domain dasar (katalog publik), sama seperti
+            ikon di Topbar untuk layar kecil (lihat topbar.tsx). */}
+        <Link href="/" className="shrink-0">
+          {icon ? (
+            // eslint-disable-next-line @next/next/no-img-element -- ikon dari URL config bebas domain, bukan aset lokal
+            <img src={icon} alt={title} className="h-8 w-8 rounded-lg object-cover" />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <BookOpen className="h-4 w-4" />
+            </div>
+          )}
+        </Link>
         <span className="font-semibold">{title} Studio</span>
       </div>
 
