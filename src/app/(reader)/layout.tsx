@@ -4,6 +4,7 @@ import { Source_Serif_4 } from 'next/font/google';
 
 import { ReaderAuthNav } from '@/components/reader/reader-auth-nav';
 import { SearchBar } from '@/components/reader/search-bar';
+import { getPlatformSlug } from '@/lib/platform';
 import { getPlatformConfig } from '@/lib/public-api';
 
 // Font serif jadi hero untuk judul & teks baca (wireframe Fase 2 yang sudah
@@ -22,16 +23,17 @@ const sourceSerif = Source_Serif_4({
  * (SEO); satu-satunya bagian client adalah `ReaderAuthNav` (status login).
  * Lihat plan/novelo/overview.md §5.
  *
- * `title`/`logo`/`colors` diambil dari `GET /public/config` (platform_config,
- * diedit langsung di DB — lihat plan/novelo/schema.dbml) supaya identitas
- * platform bisa diubah tanpa redeploy kode. `colors` diterapkan lewat
- * `<style>` inline yang override CSS var `.novelo-reader` di globals.css —
- * kalau config gagal dimuat / belum diedit, nilainya identik dengan default
- * hardcode lama (lihat `PLATFORM_CONFIG_FALLBACK`), jadi TIDAK ADA
- * perubahan visual sampai memang ada yang mengedit config di DB.
+ * `nama`/`logoUrl`/`colors` diambil dari `GET /public/platforms/:platformSlug`
+ * (Fase 4, §4.2 — menggantikan `GET /public/config` global lama), Platform
+ * di-resolve dari Host via `middleware.ts` (`getPlatformSlug()`). `colors`
+ * diterapkan lewat `<style>` inline yang override CSS var `.novelo-reader`
+ * di globals.css — kalau config gagal dimuat / belum diedit, nilainya
+ * identik dengan default hardcode lama (lihat `PLATFORM_CONFIG_FALLBACK`),
+ * jadi TIDAK ADA perubahan visual sampai memang ada yang mengedit config.
  */
 export default async function ReaderLayout({ children }: { children: ReactNode }) {
-  const config = await getPlatformConfig();
+  const slug = await getPlatformSlug();
+  const config = await getPlatformConfig(slug);
   const c = config.colors;
 
   return (
@@ -57,11 +59,11 @@ export default async function ReaderLayout({ children }: { children: ReactNode }
             className="flex items-center gap-2 text-xl font-semibold tracking-tight text-[var(--reader-terracotta)]"
             style={{ fontFamily: 'var(--font-source-serif)' }}
           >
-            {config.logo ? (
+            {config.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- logo dari URL config bebas domain, bukan aset lokal
-              <img src={config.logo} alt={config.title} className="h-7 w-auto" />
+              <img src={config.logoUrl} alt={config.nama} className="h-7 w-auto" />
             ) : (
-              config.title
+              config.nama
             )}
           </Link>
 
@@ -76,7 +78,7 @@ export default async function ReaderLayout({ children }: { children: ReactNode }
       <main className="flex-1">{children}</main>
 
       <footer className="border-t border-[var(--reader-border)] px-4 py-6 text-center text-xs text-[var(--reader-muted)] sm:px-6">
-        {config.title} — Baca &amp; tulis cerita, oleh Bagdja.
+        {config.nama} — Baca &amp; tulis cerita, oleh Bagdja.
       </footer>
     </div>
   );

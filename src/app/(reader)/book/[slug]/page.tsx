@@ -5,6 +5,7 @@ import { ContinueReadingButton } from '@/components/reader/continue-reading-butt
 import { Badge } from '@/components/ui/badge';
 import { BOOK_STATUS_LABEL, BOOK_STATUS_VARIANT } from '@/lib/status';
 import { BOOK_TYPE_BADGE_LABEL, formatBookBylinePrefix } from '@/lib/book-byline';
+import { getPlatformSlug } from '@/lib/platform';
 import { getPlatformConfig, publicFetch } from '@/lib/public-api';
 import type { BookDetailDto } from '@/lib/public-types';
 
@@ -13,17 +14,18 @@ interface BookPageProps {
 }
 
 export async function generateMetadata({ params }: BookPageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug: bookSlug } = await params;
+  const platformSlug = await getPlatformSlug();
   const [config, book] = await Promise.all([
-    getPlatformConfig(),
-    publicFetch<BookDetailDto>(`/public/books/${slug}`),
+    getPlatformConfig(platformSlug),
+    publicFetch<BookDetailDto>(`/public/platforms/${platformSlug}/books/${bookSlug}`),
   ]);
   if (!book) {
-    return { title: `Cerita tidak ditemukan — ${config.title}` };
+    return { title: `Cerita tidak ditemukan — ${config.nama}` };
   }
   return {
-    title: `${book.judul} — ${config.title}`,
-    description: book.sinopsis ?? `Baca ${book.judul} oleh ${book.library.nama} di ${config.title}.`,
+    title: `${book.judul} — ${config.nama}`,
+    description: book.sinopsis ?? `Baca ${book.judul} oleh ${book.library.nama} di ${config.nama}.`,
   };
 }
 
@@ -33,8 +35,9 @@ function formatDate(iso: string | null): string {
 }
 
 export default async function BookDetailPage({ params }: BookPageProps) {
-  const { slug } = await params;
-  const book = await publicFetch<BookDetailDto>(`/public/books/${slug}`);
+  const { slug: bookSlug } = await params;
+  const platformSlug = await getPlatformSlug();
+  const book = await publicFetch<BookDetailDto>(`/public/platforms/${platformSlug}/books/${bookSlug}`);
 
   if (!book) {
     notFound();

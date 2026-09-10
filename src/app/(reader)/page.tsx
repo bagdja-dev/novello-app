@@ -2,15 +2,17 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { BookCard } from '@/components/reader/book-card';
+import { getPlatformSlug } from '@/lib/platform';
 import { getPlatformConfig, publicFetch } from '@/lib/public-api';
 import type { CatalogResponse, GenreDto } from '@/lib/public-types';
 import { cn } from '@/lib/utils';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const config = await getPlatformConfig();
+  const slug = await getPlatformSlug();
+  const config = await getPlatformConfig(slug);
   return {
-    title: `${config.title} — Baca & Tulis Cerita`,
-    description: `Jelajahi katalog novel & cerita berseri dari berbagai penulis di ${config.title}.`,
+    title: `${config.nama} — Baca & Tulis Cerita`,
+    description: `Jelajahi katalog novel & cerita berseri dari berbagai penulis di ${config.nama}.`,
   };
 }
 
@@ -53,10 +55,11 @@ export default async function CatalogPage({
   query.set('page', String(page));
   query.set('limit', String(PAGE_LIMIT));
 
+  const slug = await getPlatformSlug();
   const [config, catalog, genres] = await Promise.all([
-    getPlatformConfig(),
-    publicFetch<CatalogResponse>(`/public/catalog?${query.toString()}`),
-    publicFetch<GenreDto[]>('/public/genres'),
+    getPlatformConfig(slug),
+    publicFetch<CatalogResponse>(`/public/platforms/${slug}/catalog?${query.toString()}`),
+    publicFetch<GenreDto[]>(`/public/platforms/${slug}/genres`),
   ]);
   const items = catalog?.items ?? [];
   const genreList = genres ?? [];
@@ -93,7 +96,7 @@ export default async function CatalogPage({
         </h1>
         <p className="mt-2 text-sm text-[var(--reader-muted)]">
           {total > 0
-            ? `${total} cerita dari para penulis ${config.title}${search ? ` untuk ${SEARCH_BY_DESCRIPTION[searchBy]} "${search}"` : ''}.`
+            ? `${total} cerita dari para penulis ${config.nama}${search ? ` untuk ${SEARCH_BY_DESCRIPTION[searchBy]} "${search}"` : ''}.`
             : 'Temukan cerita baru untuk dibaca.'}
         </p>
       </div>

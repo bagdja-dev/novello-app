@@ -29,18 +29,26 @@ export interface PlatformColors {
 }
 
 /**
- * Kontrak `GET /public/config` — key-value platform (title/logo/colors/
- * lockStudio), diedit langsung di DB (belum ada novelo-admin). Semua field
- * PUNYA fallback di sisi frontend (lihat `getPlatformConfig()`) — jangan
- * anggap request ini selalu sukses.
+ * Kontrak `GET /public/platforms/:platformSlug` (Fase 4, §4.1/§4.2, 11 Sep
+ * 2026 — menggantikan `GET /public/config` global lama yang sudah dihapus
+ * backend). Semua field PUNYA fallback di sisi frontend (lihat
+ * `getPlatformConfig()`) — jangan anggap request ini selalu sukses.
+ *
+ * Rename dari kontrak lama: `title`->`nama`, `logo`->`logoUrl`,
+ * `favicon`->`faviconUrl`. Field baru `rendererKey` — belum dipakai
+ * (hardwire selalu render `(reader)/` untuk sekarang), tapi dibaca supaya
+ * titik keputusan renderer per-Platform (overview.md §9.2) sudah ada tanpa
+ * re-arsitektur nanti.
  */
-export interface PlatformConfigDto {
-  title: string;
-  logo: string | null;
-  /** URL favicon browser tab — terpisah dari `logo` (dipakai di header). */
-  favicon: string | null;
+export interface PlatformProfileDto {
+  nama: string;
+  slug: string;
+  logoUrl: string | null;
+  /** URL favicon browser tab — terpisah dari `logoUrl` (dipakai di header). */
+  faviconUrl: string | null;
   colors: PlatformColors;
   lockStudio: boolean;
+  rendererKey: string;
 }
 
 export interface BookCatalogDto {

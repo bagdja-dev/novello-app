@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { LoadingSpinner } from '@/components/loading-spinner';
@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Sidebar } from '@/components/sidebar';
 import { Topbar } from '@/components/topbar';
 import { LibraryProvider, useLibraryContext } from '@/context/library-context';
+import { usePlatformContext } from '@/context/platform-context';
 import { useAuth } from '@/hooks/use-auth';
 import { useLibrary } from '@/hooks/use-library';
-import { getPlatformConfig } from '@/lib/public-api';
 
 function AuthGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -68,25 +68,21 @@ function LibraryGuard({ children }: { children: ReactNode }) {
   return <LibraryProvider library={library}>{children}</LibraryProvider>;
 }
 
-// Sidebar & Topbar sama-sama butuh title/icon platform_config — di-fetch
-// SEKALI di sini (bukan masing-masing komponen) supaya tidak ada 2 request
-// terpisah untuk data yang identik. Default sama dengan
-// PLATFORM_CONFIG_FALLBACK, cukup sebagai nilai awal sebelum config kebaca.
-// Sengaja pakai `favicon` (bukan `logo`) — dikonfirmasi eksplisit user:
-// badge kecil di Sidebar/Topbar pakai ikon persegi (favicon), `logo` (brand
-// mark lebar) khusus header reader.
+// Sidebar & Topbar sama-sama butuh nama/icon Platform — sekarang datang dari
+// `PlatformProvider` (root layout, sudah ter-hidrasi server-side, lihat
+// context/platform-context.tsx) alih-alih fetch client-side sendiri seperti
+// sebelumnya — tidak ada lagi loading-flicker. Sengaja pakai `faviconUrl`
+// (bukan `logoUrl`) — dikonfirmasi eksplisit user: badge kecil di
+// Sidebar/Topbar pakai ikon persegi (favicon), `logoUrl` (brand mark lebar)
+// khusus header reader.
 function DashboardShell({ children }: { children: ReactNode }) {
-  const [branding, setBranding] = useState({ title: 'Novelo', icon: null as string | null });
-
-  useEffect(() => {
-    getPlatformConfig().then((config) => setBranding({ title: config.title, icon: config.favicon }));
-  }, []);
+  const { config } = usePlatformContext();
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar title={branding.title} icon={branding.icon} />
+      <Sidebar title={config.nama} icon={config.faviconUrl} />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <DashboardTopbar title={branding.title} icon={branding.icon} />
+        <DashboardTopbar title={config.nama} icon={config.faviconUrl} />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>

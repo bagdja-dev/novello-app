@@ -20,9 +20,44 @@ import { Redis } from '@upstash/redis';
 const STATE_KEY_PREFIX = 'oauth_state:';
 const DEFAULT_TTL_SECONDS = 600;
 
+const HANDOFF_KEY_PREFIX = 'session_handoff:';
+const HANDOFF_TTL_SECONDS = 60;
+/** Bukan dihapus langsung saat consume — grace window pendek supaya retry/double-invoke tidak langsung gagal (pelajaran bagdja-auction-web, lihat custom-domain-setup.md §6.3#2). */
+const HANDOFF_CONSUMED_GRACE_SECONDS = 30;
+
 export interface StudioOAuthStatePayload {
   codeVerifier: string;
   next: string | null;
+  /**
+   * Origin (scheme+host) tempat user mengklik login — direkam via
+   * `resolveOrigin()` di `login/route.ts` (11 Sep 2026, fix bug login dari
+   * subdomain Platform selalu balik ke host default). `redirect_uri` OAuth
+   * WAJIB satu host tetap terdaftar di bagdja-auth, jadi request callback
+   * SELALU tiba di host itu — origin asli baru bisa diketahui lagi lewat
+   * state ini. Kalau beda dari origin request callback, `callback/route.ts`
+   * memicu session-handoff (`SessionHandoffPayload` di bawah) alih-alih
+   * langsung set cookie di response callback (yang host-nya beda dari
+   * origin ini).
+   */
+  origin: string;
+}
+
+/**
+ * Payload handoff sesi lintas host — dipakai saat `callback/route.ts`
+ * berhasil tukar token TAPI origin tujuan (subdomain Platform asal login)
+ * beda dari host callback OAuth sendiri. Cookie session TIDAK di-set di
+ * response callback (host-nya salah) — sebagai gantinya token+user
+ * dititipkan di sini, redirect ke `${origin}/auth/session?handoff=...`,
+ * dan `app/auth/session/route.ts` (yang FISIK jalan di origin tujuan)
+ * yang benar-benar set cookie-nya. Dipilih dibanding cookie `Domain`
+ * wildcard (sempat dicoba, lihat riwayat di lib/platform-host.ts) karena
+ * tidak bergantung sama sekali pada dukungan browser untuk Domain
+ * attribute di host sintetis (mis. `localhost`).
+ */
+export interface SessionHandoffPayload {
+  accessToken: string;
+  user: { userId: string; email?: string; username?: string };
+  redirectTo: string;
 }
 
 let cachedClient: Redis | null | undefined;
@@ -111,6 +146,61 @@ export async function consumeOAuthState(id: string): Promise<StudioOAuthStatePay
     const payload = typeof raw === 'string' ? (JSON.parse(raw) as StudioOAuthStatePayload) : raw;
     if (!payload?.codeVerifier) return null;
     return payload;
+  } catch {
+    return null;
+  }
+}
+
+// ─── Session handoff (lintas host, lihat SessionHandoffPayload) ──────────
+
+const handoffMemoryStore = new Map<string, { payload: SessionHandoffPayload; expiresAt: number }>();
+
+export function generateHandoffId(): string {
+  return crypto.randomBytes(18).toString('base64url');
+}
+
+export async function saveSessionHandoff(id: string, payload: SessionHandoffPayload): Promise<boolean> {
+  const redis = getRedisClient();
+  if (!redis) {
+    if (!isMemoryFallbackAllowed()) return false;
+    handoffMemoryStore.set(`${HANDOFF_KEY_PREFIX}${id}`, {
+      payload,
+      expiresAt: Date.now() + HANDOFF_TTL_SECONDS * 1000,
+    });
+    return true;
+  }
+  await redis.set(`${HANDOFF_KEY_PREFIX}${id}`, payload, { ex: HANDOFF_TTL_SECONDS });
+  return true;
+}
+
+/**
+ * BUKAN `GETDEL` — grace window (perpanjang TTL pendek, bukan hapus
+ * langsung) supaya kalau `/auth/session` sempat ke-invoke dua kali (retry
+ * jaringan, navigasi back/forward dobel), invoke kedua tidak langsung gagal
+ * `state_mismatch`. Pelajaran diambil dari insiden nyata bagdja-auction-web
+ * (lihat custom-domain-setup.md §6.3#2).
+ */
+export async function consumeSessionHandoff(id: string): Promise<SessionHandoffPayload | null> {
+  const key = `${HANDOFF_KEY_PREFIX}${id}`;
+  const redis = getRedisClient();
+
+  if (!redis) {
+    if (!isMemoryFallbackAllowed()) return null;
+    const entry = handoffMemoryStore.get(key);
+    if (!entry || entry.expiresAt <= Date.now()) {
+      handoffMemoryStore.delete(key);
+      return null;
+    }
+    handoffMemoryStore.set(key, { payload: entry.payload, expiresAt: Date.now() + HANDOFF_CONSUMED_GRACE_SECONDS * 1000 });
+    return entry.payload;
+  }
+
+  const raw = await redis.get<SessionHandoffPayload | string>(key);
+  if (!raw) return null;
+  await redis.expire(key, HANDOFF_CONSUMED_GRACE_SECONDS);
+
+  try {
+    return typeof raw === 'string' ? (JSON.parse(raw) as SessionHandoffPayload) : raw;
   } catch {
     return null;
   }

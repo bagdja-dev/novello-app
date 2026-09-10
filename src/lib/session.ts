@@ -27,8 +27,22 @@ export interface SessionUser {
   username?: string;
 }
 
+/**
+ * SENGAJA host-only (tanpa `Domain` attribute) — cookie `Domain` wildcard
+ * (mis. `Domain=localhost`) sempat dicoba untuk dukung login lintas
+ * subdomain (11 Sep 2026), tapi single-label host sintetis seperti
+ * `localhost` (beda dari domain asli berlabel banyak seperti
+ * `novelo.bagdja.com`) tidak konsisten diterima semua browser sebagai
+ * Domain cookie — menyebabkan bug nyata (loop "memeriksa sesi login" di
+ * subdomain `*.localhost`). Diganti pola session-handoff (lihat
+ * `oauth-state-store.ts` `saveSessionHandoff`/`consumeSessionHandoff` +
+ * `app/auth/session/route.ts`) — `setSession()` SELALU dipanggil dari
+ * request yang FISIK sedang berada di host tujuan, jadi host-only cookie
+ * sudah cukup, tidak perlu wildcard sama sekali.
+ */
 export async function setSession(token: string, user: SessionUser) {
   const jar = await cookies();
+
   jar.set(TOKEN_COOKIE, token, COOKIE_OPTIONS);
   jar.set(USER_COOKIE, JSON.stringify(user), {
     ...COOKIE_OPTIONS,

@@ -7,6 +7,7 @@ import type { GenreDto } from './public-types';
 
 export interface Library {
   id: string;
+  platformId: string | null;
   ownerUserId: string;
   nama: string;
   slug: string;
@@ -17,6 +18,8 @@ export interface Library {
 }
 
 export interface CreateLibraryPayload {
+  /** Slug Platform tempat Library ini dibuat (Fase 4, §4.2) — dari usePlatformContext(). */
+  platformSlug: string;
   nama: string;
   slug: string;
   deskripsi?: string;

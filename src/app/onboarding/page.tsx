@@ -11,10 +11,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { usePlatformContext } from '@/context/platform-context';
 import { useAuth } from '@/hooks/use-auth';
 import { useLibrary } from '@/hooks/use-library';
 import { apiClient, ApiError, slugify } from '@/lib/api-client';
-import { getPlatformConfig } from '@/lib/public-api';
 import type { CreateLibraryPayload, Library } from '@/lib/types';
 
 function AuthGuard({ children }: { children: ReactNode }) {
@@ -37,6 +37,12 @@ function AuthGuard({ children }: { children: ReactNode }) {
 function OnboardingForm() {
   const router = useRouter();
   const { library, loading: libraryLoading, error: libraryError } = useLibrary();
+  // platforms.lock_studio (gantinya platform_config.lockStudio lama, Fase 4
+  // §4.2) — kalau true, pendaftaran Library baru ditutup lewat form ini;
+  // satu-satunya jalur adalah insert manual ke DB oleh tim Bagdja. Datang
+  // dari `PlatformProvider` (root layout, sudah ter-hidrasi server-side) —
+  // tidak ada lagi fetch/loading state terpisah di sini.
+  const { slug: platformSlug, config: platformConfig } = usePlatformContext();
 
   const [nama, setNama] = useState('');
   const [slug, setSlug] = useState('');
@@ -45,23 +51,6 @@ function OnboardingForm() {
   const [coverUrl, setCoverUrl] = useState('');
   const [coverUploading, setCoverUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [lockStudio, setLockStudio] = useState(false);
-  const [platformTitle, setPlatformTitle] = useState('Novelo');
-  const [configLoading, setConfigLoading] = useState(true);
-
-  // platform_config.lockStudio (disepakati 9 Sep 2026) — kalau true, pendaftaran
-  // Library baru ditutup lewat form ini; satu-satunya jalur adalah insert manual
-  // ke DB oleh tim Bagdja. Dicek client-side (pola sama dengan fetch genre di
-  // book-form.tsx) karena halaman ini authenticated (`AuthGuard`), bukan SSR.
-  // Sekalian ambil `title` supaya body copy di bawah tidak hardcode "Novelo".
-  useEffect(() => {
-    getPlatformConfig()
-      .then((config) => {
-        setLockStudio(config.lockStudio);
-        setPlatformTitle(config.title);
-      })
-      .finally(() => setConfigLoading(false));
-  }, []);
 
   // Sudah punya Library (mis. buka /onboarding lagi lewat back button) →
   // tidak perlu isi form lagi, langsung ke dashboard.
@@ -94,6 +83,7 @@ function OnboardingForm() {
     setSubmitting(true);
     try {
       const payload: CreateLibraryPayload = {
+        platformSlug,
         nama: nama.trim(),
         slug: slug.trim(),
         ...(deskripsi.trim() ? { deskripsi: deskripsi.trim() } : {}),
@@ -113,11 +103,11 @@ function OnboardingForm() {
     }
   }
 
-  if (libraryLoading || configLoading) {
+  if (libraryLoading) {
     return <LoadingSpinner label="Memeriksa Library…" />;
   }
 
-  if (lockStudio) {
+  if (platformConfig.lockStudio) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
         <Card className="w-full max-w-lg">
@@ -125,7 +115,7 @@ function OnboardingForm() {
             <CardTitle className="text-xl">Pendaftaran sedang ditutup</CardTitle>
             <CardDescription>
               Pendaftaran penulis baru (pembuatan Library) sedang ditutup sementara. Hubungi
-              admin platform kalau kamu ingin mulai menulis di {platformTitle}.
+              admin platform kalau kamu ingin mulai menulis di {platformConfig.nama}.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -139,7 +129,7 @@ function OnboardingForm() {
         <CardHeader>
           <CardTitle className="text-xl">Buat Library kamu</CardTitle>
           <CardDescription>
-            Library adalah ruang kerja penulis di {platformTitle} — tempat kamu mengelola semua
+            Library adalah ruang kerja penulis di {platformConfig.nama} — tempat kamu mengelola semua
             Book & Chapter. Isi detail berikut untuk memulai.
           </CardDescription>
         </CardHeader>

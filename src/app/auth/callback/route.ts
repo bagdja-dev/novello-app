@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { setSession } from '@/lib/session';
-import { consumeOAuthState } from '@/lib/oauth-state-store';
+import { consumeOAuthState, generateHandoffId, saveSessionHandoff } from '@/lib/oauth-state-store';
+import { resolveOrigin } from '@/lib/resolve-origin';
 
 const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL ?? 'https://login.bagdja.com';
 const CLIENT_ID = process.env.NEXT_PUBLIC_CLIENT_ID ?? 'novelo';
@@ -9,17 +10,18 @@ const REDIRECT_URI =
   process.env.NEXT_PUBLIC_REDIRECT_URI ?? 'http://localhost:5021/auth/callback';
 
 export async function GET(request: NextRequest) {
+  const origin = resolveOrigin(request);
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const state = searchParams.get('state');
   const error = searchParams.get('error');
 
   if (error) {
-    return NextResponse.redirect(new URL('/?error=auth_denied', request.url));
+    return NextResponse.redirect(new URL('/?error=auth_denied', origin));
   }
 
   if (!code || !state) {
-    return NextResponse.redirect(new URL('/?error=missing_params', request.url));
+    return NextResponse.redirect(new URL('/?error=missing_params', origin));
   }
 
   // code_verifier + next path dibaca dari Upstash Redis (sekali pakai, lalu
@@ -29,7 +31,7 @@ export async function GET(request: NextRequest) {
   const decoded = await consumeOAuthState(state);
 
   if (!decoded) {
-    return NextResponse.redirect(new URL('/?error=state_mismatch', request.url));
+    return NextResponse.redirect(new URL('/?error=state_mismatch', origin));
   }
 
   const codeVerifier = decoded.codeVerifier;
@@ -51,7 +53,7 @@ export async function GET(request: NextRequest) {
     if (!tokenRes.ok) {
       const errBody = await tokenRes.text();
       console.error('Token exchange failed:', errBody);
-      return NextResponse.redirect(new URL('/?error=token_failed', request.url));
+      return NextResponse.redirect(new URL('/?error=token_failed', origin));
     }
 
     const data = await tokenRes.json();
@@ -60,23 +62,47 @@ export async function GET(request: NextRequest) {
     const payload = JSON.parse(
       Buffer.from(accessToken.split('.')[1], 'base64').toString(),
     );
-
-    await setSession(accessToken, {
+    const user = {
       userId: payload.sub ?? payload.userId,
       email: payload.email,
       username: payload.username,
-    });
+    };
 
     const nextPath = decoded.next;
-
     const redirectTo =
       nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//')
         ? nextPath
         : '/dashboard';
 
-    return NextResponse.redirect(new URL(redirectTo, request.url));
+    // `decoded.origin` = subdomain Platform TEMPAT USER SEBENARNYA login
+    // (direkam login/route.ts) — BEDA dari `origin` request callback ini
+    // (SELALU host tetap `redirect_uri`, tidak peduli subdomain mana user
+    // mulai). Kalau SAMA (login dari host default sendiri) — jalur cepat,
+    // set cookie langsung di response ini. Kalau BEDA (subdomain Platform
+    // lain) — cookie TIDAK bisa di-set di sini (host response ini salah),
+    // titipkan via session-handoff (Upstash) lalu redirect ke
+    // `${decoded.origin}/auth/session?handoff=...` yang FISIK jalan di host
+    // tujuan untuk benar-benar set cookie-nya. Lihat riwayat keputusan di
+    // lib/platform-host.ts (kenapa BUKAN cookie `Domain` wildcard).
+    const targetOrigin = decoded.origin || origin;
+
+    if (targetOrigin === origin) {
+      await setSession(accessToken, user);
+      return NextResponse.redirect(new URL(redirectTo, targetOrigin));
+    }
+
+    const handoffId = generateHandoffId();
+    const saved = await saveSessionHandoff(handoffId, { accessToken, user, redirectTo });
+    if (!saved) {
+      console.error('Session handoff gagal disimpan (Upstash Redis belum dikonfigurasi)');
+      return NextResponse.redirect(new URL('/?error=server_misconfigured', origin));
+    }
+
+    const sessionUrl = new URL('/auth/session', targetOrigin);
+    sessionUrl.searchParams.set('handoff', handoffId);
+    return NextResponse.redirect(sessionUrl);
   } catch (err) {
     console.error('OAuth callback error:', err);
-    return NextResponse.redirect(new URL('/?error=server_error', request.url));
+    return NextResponse.redirect(new URL('/?error=server_error', origin));
   }
 }

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 
+import { getPlatformSlug } from '@/lib/platform';
 import { getPlatformConfig, publicFetch } from '@/lib/public-api';
 import { getSession } from '@/lib/session';
 import type { ChapterReadDto } from '@/lib/public-types';
@@ -15,15 +16,16 @@ interface ChapterPageProps {
 
 export async function generateMetadata({ params }: ChapterPageProps): Promise<Metadata> {
   const { slug, orderIndex } = await params;
+  const platformSlug = await getPlatformSlug();
   const [config, chapter] = await Promise.all([
-    getPlatformConfig(),
-    publicFetch<ChapterReadDto>(`/public/books/${slug}/chapters/${orderIndex}`),
+    getPlatformConfig(platformSlug),
+    publicFetch<ChapterReadDto>(`/public/platforms/${platformSlug}/books/${slug}/chapters/${orderIndex}`),
   ]);
   if (!chapter) {
-    return { title: `Chapter tidak ditemukan — ${config.title}` };
+    return { title: `Chapter tidak ditemukan — ${config.nama}` };
   }
   return {
-    title: `${chapter.judul} — ${chapter.book.judul} — ${config.title}`,
+    title: `${chapter.judul} — ${chapter.book.judul} — ${config.nama}`,
   };
 }
 
@@ -44,7 +46,8 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
     redirect(`/auth/login?next=${encodeURIComponent(`/book/${slug}/chapter/${orderIndex}`)}`);
   }
 
-  const chapter = await publicFetch<ChapterReadDto>(`/public/books/${slug}/chapters/${orderIndex}`);
+  const platformSlug = await getPlatformSlug();
+  const chapter = await publicFetch<ChapterReadDto>(`/public/platforms/${platformSlug}/books/${slug}/chapters/${orderIndex}`);
 
   if (!chapter) {
     notFound();

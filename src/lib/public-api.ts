@@ -9,20 +9,23 @@
  * langsung tanpa nunggu client-side fetch). Lihat plan/novelo/overview.md §5
  * dan execution-plan.md Fase 2.
  */
-import type { PlatformConfigDto } from './public-types';
+import { cache } from 'react';
+
+import type { PlatformProfileDto } from './public-types';
 
 const API_BASE = process.env.NEXT_PUBLIC_NOVELO_API_URL ?? 'http://localhost:5020';
 
 /**
- * Default SAMA PERSIS dengan seed awal `platform_config` di backend
- * (migration 20260909020000_platform_config.sql) — dipakai kalau
- * `GET /public/config` gagal dimuat, supaya tampilan tetap identik dengan
- * sebelum fitur ini ada (bukan layar rusak/kosong).
+ * Default SAMA PERSIS dengan seed awal `platforms` di backend (migration
+ * 20260910000000_platforms_and_platform_staff.sql) — dipakai kalau
+ * `GET /public/platforms/:platformSlug` gagal dimuat, supaya tampilan tetap
+ * identik dengan sebelum fitur ini ada (bukan layar rusak/kosong).
  */
-const PLATFORM_CONFIG_FALLBACK: PlatformConfigDto = {
-  title: 'Novelo',
-  logo: null,
-  favicon: null,
+const PLATFORM_CONFIG_FALLBACK: PlatformProfileDto = {
+  nama: 'Novelo',
+  slug: 'novelo',
+  logoUrl: null,
+  faviconUrl: null,
   colors: {
     bg: '#fbf6ee',
     surface: '#fffdf8',
@@ -35,6 +38,7 @@ const PLATFORM_CONFIG_FALLBACK: PlatformConfigDto = {
     olive: '#6b7a4c',
   },
   lockStudio: false,
+  rendererKey: 'reader',
 };
 
 /**
@@ -69,19 +73,24 @@ export async function publicFetch<T>(path: string): Promise<T | null> {
 }
 
 /**
- * Wrapper `publicFetch('/public/config')` dengan fallback aman (lihat
- * `PLATFORM_CONFIG_FALLBACK` di atas) — pemanggil TIDAK PERLU cek `null`,
- * selalu dapat object lengkap. Dipakai `(reader)/layout.tsx` (title/logo/
- * colors) dan halaman onboarding (`lockStudio`).
+ * Wrapper `publicFetch('/public/platforms/:platformSlug')` dengan fallback
+ * aman (lihat `PLATFORM_CONFIG_FALLBACK` di atas) — pemanggil TIDAK PERLU
+ * cek `null`, selalu dapat object lengkap. Dibungkus `cache()` (React) —
+ * beberapa pemanggil dalam satu request (root layout + reader layout +
+ * page) dedupe jadi satu fetch, bukan berulang.
  */
-export async function getPlatformConfig(): Promise<PlatformConfigDto> {
-  const config = await publicFetch<Partial<PlatformConfigDto>>('/public/config');
+export const getPlatformConfig = cache(async (platformSlug: string): Promise<PlatformProfileDto> => {
+  const config = await publicFetch<Partial<PlatformProfileDto>>(
+    `/public/platforms/${encodeURIComponent(platformSlug)}`,
+  );
   if (!config) return PLATFORM_CONFIG_FALLBACK;
   return {
-    title: config.title || PLATFORM_CONFIG_FALLBACK.title,
-    logo: config.logo ?? PLATFORM_CONFIG_FALLBACK.logo,
-    favicon: config.favicon ?? PLATFORM_CONFIG_FALLBACK.favicon,
+    nama: config.nama || PLATFORM_CONFIG_FALLBACK.nama,
+    slug: config.slug || platformSlug,
+    logoUrl: config.logoUrl ?? PLATFORM_CONFIG_FALLBACK.logoUrl,
+    faviconUrl: config.faviconUrl ?? PLATFORM_CONFIG_FALLBACK.faviconUrl,
     colors: { ...PLATFORM_CONFIG_FALLBACK.colors, ...config.colors },
     lockStudio: config.lockStudio ?? PLATFORM_CONFIG_FALLBACK.lockStudio,
+    rendererKey: config.rendererKey || PLATFORM_CONFIG_FALLBACK.rendererKey,
   };
-}
+});

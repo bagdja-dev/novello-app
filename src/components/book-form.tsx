@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { usePlatformContext } from '@/context/platform-context';
 import { slugify } from '@/lib/api-client';
 import { publicFetch } from '@/lib/public-api';
 import type { GenreDto } from '@/lib/public-types';
@@ -58,6 +59,7 @@ interface BookFormProps {
  * `genreId` (UUID), bukan nama genre bebas.
  */
 export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmit }: BookFormProps) {
+  const { slug: platformSlug } = usePlatformContext();
   const [judul, setJudul] = useState(initialValues?.judul ?? '');
   const [slug, setSlug] = useState(initialValues?.slug ?? '');
   const [slugTouched, setSlugTouched] = useState(mode === 'edit');
@@ -73,13 +75,13 @@ export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmi
 
   useEffect(() => {
     let cancelled = false;
-    publicFetch<GenreDto[]>('/public/genres').then((data) => {
+    publicFetch<GenreDto[]>(`/public/platforms/${platformSlug}/genres`).then((data) => {
       if (!cancelled) setGenres(data ?? []);
     });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [platformSlug]);
 
   function handleJudulChange(value: string) {
     setJudul(value);
