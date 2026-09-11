@@ -26,6 +26,7 @@ export default function NewBookPage() {
         slug: values.slug,
         ...(values.sinopsis ? { sinopsis: values.sinopsis } : {}),
         ...(values.genreId ? { genreId: values.genreId } : {}),
+        ...(values.categoryId ? { categoryId: values.categoryId } : {}),
         ...(values.coverUrl ? { coverUrl: values.coverUrl } : {}),
         bookType: values.bookType,
         ...(values.originalAuthor ? { originalAuthor: values.originalAuthor } : {}),

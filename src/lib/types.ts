@@ -3,7 +3,7 @@
  * JANGAN diubah sepihak dari sisi Studio; kontrak ini disepakati bersama
  * backend (dikerjakan paralel).
  */
-import type { GenreDto } from './public-types';
+import type { CategorySummaryDto, GenreDto } from './public-types';
 
 export interface Library {
   id: string;
@@ -46,6 +46,7 @@ export interface Book {
   slug: string;
   sinopsis: string | null;
   genre: GenreDto | null;
+  category: CategorySummaryDto | null;
   coverUrl: string | null;
   status: BookStatus;
   bookType: BookType;
@@ -62,6 +63,8 @@ export interface CreateBookPayload {
   slug: string;
   sinopsis?: string;
   genreId?: string;
+  /** Dipilih terpisah dari genreId (§4.5) — tidak divalidasi harus "cocok" dengan genre. */
+  categoryId?: string;
   coverUrl?: string;
   bookType?: BookType;
   originalAuthor?: string;
@@ -73,6 +76,7 @@ export interface UpdateBookPayload {
   judul?: string;
   sinopsis?: string;
   genreId?: string;
+  categoryId?: string | null;
   coverUrl?: string;
   status?: BookStatus;
   published?: boolean;

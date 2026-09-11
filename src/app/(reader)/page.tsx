@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { BookCard } from '@/components/reader/book-card';
 import { getPlatformSlug } from '@/lib/platform';
 import { getPlatformConfig, publicFetch } from '@/lib/public-api';
-import type { CatalogResponse, GenreDto } from '@/lib/public-types';
+import type { CategoryDto, CatalogResponse, GenreDto } from '@/lib/public-types';
 import { cn } from '@/lib/utils';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -30,6 +30,7 @@ interface CatalogSearchParams {
   search?: string;
   searchBy?: string;
   genre?: string;
+  category?: string;
   page?: string;
 }
 
@@ -42,7 +43,13 @@ export default async function CatalogPage({
 }: {
   searchParams: Promise<CatalogSearchParams>;
 }) {
-  const { search = '', searchBy: searchByParam = '', genre = '', page: pageParam = '1' } = await searchParams;
+  const {
+    search = '',
+    searchBy: searchByParam = '',
+    genre = '',
+    category = '',
+    page: pageParam = '1',
+  } = await searchParams;
   const page = Math.max(1, Number.parseInt(pageParam, 10) || 1);
   const searchBy: CatalogSearchBy = VALID_SEARCH_BY.includes(searchByParam as CatalogSearchBy)
     ? (searchByParam as CatalogSearchBy)
@@ -52,17 +59,20 @@ export default async function CatalogPage({
   if (search) query.set('search', search);
   if (search && searchBy !== 'judul') query.set('searchBy', searchBy);
   if (genre) query.set('genre', genre);
+  if (category) query.set('category', category);
   query.set('page', String(page));
   query.set('limit', String(PAGE_LIMIT));
 
   const slug = await getPlatformSlug();
-  const [config, catalog, genres] = await Promise.all([
+  const [config, catalog, genres, categories] = await Promise.all([
     getPlatformConfig(slug),
     publicFetch<CatalogResponse>(`/public/platforms/${slug}/catalog?${query.toString()}`),
     publicFetch<GenreDto[]>(`/public/platforms/${slug}/genres`),
+    publicFetch<CategoryDto[]>(`/public/platforms/${slug}/categories`),
   ]);
   const items = catalog?.items ?? [];
   const genreList = genres ?? [];
+  const categoryList = categories ?? [];
   const total = catalog?.total ?? 0;
   const totalPages = catalog ? Math.max(1, Math.ceil(total / (catalog.limit || PAGE_LIMIT))) : 1;
 
@@ -71,6 +81,7 @@ export default async function CatalogPage({
     if (search) params.set('search', search);
     if (search && searchBy !== 'judul') params.set('searchBy', searchBy);
     if (genre) params.set('genre', genre);
+    if (category) params.set('category', category);
     if (targetPage > 1) params.set('page', String(targetPage));
     const qs = params.toString();
     return qs ? `/?${qs}` : '/';
@@ -81,6 +92,17 @@ export default async function CatalogPage({
     if (search) params.set('search', search);
     if (search && searchBy !== 'judul') params.set('searchBy', searchBy);
     if (targetGenre) params.set('genre', targetGenre);
+    if (category) params.set('category', category);
+    const qs = params.toString();
+    return qs ? `/?${qs}` : '/';
+  }
+
+  function categoryHref(targetCategory: string) {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (search && searchBy !== 'judul') params.set('searchBy', searchBy);
+    if (genre) params.set('genre', genre);
+    if (targetCategory) params.set('category', targetCategory);
     const qs = params.toString();
     return qs ? `/?${qs}` : '/';
   }
@@ -100,6 +122,36 @@ export default async function CatalogPage({
             : 'Temukan cerita baru untuk dibaca.'}
         </p>
       </div>
+
+      {categoryList.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <Link
+            href={categoryHref('')}
+            className={cn(
+              'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+              !category
+                ? 'border-[var(--reader-terracotta)] bg-[var(--reader-terracotta)] text-[var(--reader-terracotta-foreground)]'
+                : 'border-[var(--reader-border)] bg-[var(--reader-surface)] text-[var(--reader-muted)] hover:border-[var(--reader-terracotta)] hover:text-[var(--reader-terracotta)]',
+            )}
+          >
+            Semua Category
+          </Link>
+          {categoryList.map((c) => (
+            <Link
+              key={c.id}
+              href={categoryHref(c.slug)}
+              className={cn(
+                'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                category === c.slug
+                  ? 'border-[var(--reader-terracotta)] bg-[var(--reader-terracotta)] text-[var(--reader-terracotta-foreground)]'
+                  : 'border-[var(--reader-border)] bg-[var(--reader-surface)] text-[var(--reader-muted)] hover:border-[var(--reader-terracotta)] hover:text-[var(--reader-terracotta)]',
+              )}
+            >
+              {c.nama}
+            </Link>
+          ))}
+        </div>
+      )}
 
       <div className="mb-8 flex flex-wrap items-center gap-2">
         <Link
@@ -135,7 +187,7 @@ export default async function CatalogPage({
         </p>
       ) : items.length === 0 ? (
         <p className="rounded-lg border border-[var(--reader-border)] bg-[var(--reader-surface)] px-4 py-8 text-center text-sm text-[var(--reader-muted)]">
-          Belum ada cerita yang cocok{search || genre ? ' dengan pencarian/filter ini' : ''}.
+          Belum ada cerita yang cocok{search || genre || category ? ' dengan pencarian/filter ini' : ''}.
         </p>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">

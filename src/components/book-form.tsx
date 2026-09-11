@@ -6,13 +6,23 @@ import { Button } from '@/components/ui/button';
 import { CoverImageUpload } from '@/components/cover-image-upload';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { usePlatformContext } from '@/context/platform-context';
 import { slugify } from '@/lib/api-client';
 import { publicFetch } from '@/lib/public-api';
-import type { GenreDto } from '@/lib/public-types';
+import type { CategoryDto, GenreDto } from '@/lib/public-types';
 import type { BookStatus, BookType } from '@/lib/types';
+
+const UNCATEGORIZED_LABEL = 'Lainnya';
 
 const BOOK_TYPE_LABEL: Record<BookType, string> = {
   original: 'Karya Original',
@@ -31,6 +41,7 @@ export interface BookFormValues {
   slug: string;
   sinopsis: string;
   genreId: string;
+  categoryId: string;
   coverUrl: string;
   bookType: BookType;
   originalAuthor: string;
@@ -57,6 +68,12 @@ interface BookFormProps {
  * Genre diambil dari `GET /public/genres` (endpoint publik, tanpa auth) —
  * bukan lagi hardcode di frontend. Value yang dikirim ke backend adalah
  * `genreId` (UUID), bukan nama genre bebas.
+ *
+ * §4.5 (11 Sep 2026): Category ditambah sebagai field TERPISAH dari Genre
+ * (`categoryId`, independen — TIDAK divalidasi harus "cocok" dengan Genre
+ * yang dipilih). Dropdown Genre TETAP dikelompokkan per Category (murni
+ * bantu UX memilih) — Genre yang belum masuk Category manapun dikelompokkan
+ * di bawah label "Lainnya".
  */
 export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmit }: BookFormProps) {
   const { slug: platformSlug } = usePlatformContext();
@@ -65,6 +82,7 @@ export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmi
   const [slugTouched, setSlugTouched] = useState(mode === 'edit');
   const [sinopsis, setSinopsis] = useState(initialValues?.sinopsis ?? '');
   const [genreId, setGenreId] = useState(initialValues?.genreId ?? '');
+  const [categoryId, setCategoryId] = useState(initialValues?.categoryId ?? '');
   const [coverUrl, setCoverUrl] = useState(initialValues?.coverUrl ?? '');
   const [coverUploading, setCoverUploading] = useState(false);
   const [bookType, setBookType] = useState<BookType>(initialValues?.bookType ?? 'original');
@@ -72,16 +90,45 @@ export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmi
   const [status, setStatus] = useState<BookStatus>(initialValues?.status ?? 'draft');
 
   const [genres, setGenres] = useState<GenreDto[] | null>(null);
+  const [categories, setCategories] = useState<CategoryDto[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     publicFetch<GenreDto[]>(`/public/platforms/${platformSlug}/genres`).then((data) => {
       if (!cancelled) setGenres(data ?? []);
     });
+    publicFetch<CategoryDto[]>(`/public/platforms/${platformSlug}/categories`).then((data) => {
+      if (!cancelled) setCategories(data ?? []);
+    });
     return () => {
       cancelled = true;
     };
   }, [platformSlug]);
+
+  // Kelompokkan Genre per Category (murni tampilan dropdown) — Genre yang
+  // belum jadi anggota Category manapun masuk grup "Lainnya" di akhir.
+  const genreGroups = (() => {
+    if (!genres) return null;
+    if (!categories || categories.length === 0) {
+      return [{ label: UNCATEGORIZED_LABEL, genres }];
+    }
+
+    const categorizedGenreIds = new Set<string>();
+    const groups = categories
+      .map((category) => {
+        const members = genres.filter((g) => category.genres.some((cg) => cg.id === g.id));
+        members.forEach((g) => categorizedGenreIds.add(g.id));
+        return { label: category.nama, genres: members };
+      })
+      .filter((group) => group.genres.length > 0);
+
+    const uncategorized = genres.filter((g) => !categorizedGenreIds.has(g.id));
+    if (uncategorized.length > 0) {
+      groups.push({ label: UNCATEGORIZED_LABEL, genres: uncategorized });
+    }
+
+    return groups;
+  })();
 
   function handleJudulChange(value: string) {
     setJudul(value);
@@ -102,6 +149,7 @@ export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmi
       slug: slug.trim(),
       sinopsis: sinopsis.trim(),
       genreId,
+      categoryId,
       coverUrl: coverUrl.trim(),
       bookType,
       originalAuthor: originalAuthor.trim(),
@@ -173,6 +221,29 @@ export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmi
       )}
 
       <div className="flex flex-col gap-2">
+        <Label htmlFor="category">Category</Label>
+        <Select
+          value={categoryId || undefined}
+          onValueChange={(value) => setCategoryId(value)}
+          disabled={submitting || !categories}
+        >
+          <SelectTrigger id="category" className="w-full">
+            <SelectValue placeholder={categories ? 'Pilih category (opsional)' : 'Memuat category…'} />
+          </SelectTrigger>
+          <SelectContent>
+            {(categories ?? []).map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.nama}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {categories && categories.length === 0 && (
+          <p className="text-xs text-muted-foreground">Belum ada category tersedia.</p>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2">
         <Label htmlFor="genre">Genre</Label>
         <Select
           value={genreId || undefined}
@@ -183,10 +254,15 @@ export function BookForm({ mode, initialValues, submitting, submitLabel, onSubmi
             <SelectValue placeholder={genres ? 'Pilih genre (opsional)' : 'Memuat genre…'} />
           </SelectTrigger>
           <SelectContent>
-            {(genres ?? []).map((g) => (
-              <SelectItem key={g.id} value={g.id}>
-                {g.nama}
-              </SelectItem>
+            {(genreGroups ?? []).map((group) => (
+              <SelectGroup key={group.label}>
+                <SelectLabel>{group.label}</SelectLabel>
+                {group.genres.map((g) => (
+                  <SelectItem key={g.id} value={g.id}>
+                    {g.nama}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             ))}
           </SelectContent>
         </Select>

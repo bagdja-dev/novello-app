@@ -16,6 +16,27 @@ export interface GenreDto {
   slug: string;
 }
 
+/**
+ * Kontrak `GET /public/platforms/:platformSlug/categories` (§4.5, 11 Sep
+ * 2026) — satu level di atas Genre, many-to-many (`genres` adalah anggota
+ * Category ini). Dipakai Studio (kelompokkan dropdown Genre) & Reader
+ * (filter katalog tambahan di atas filter Genre).
+ */
+export interface CategoryDto {
+  id: string;
+  nama: string;
+  slug: string;
+  genres: GenreDto[];
+}
+
+/** Bentuk ringkas Category yang di-embed di Book (§4.5) — tanpa nested `genres`. */
+export interface CategorySummaryDto {
+  id: string;
+  platformId: string;
+  nama: string;
+  slug: string;
+}
+
 export interface PlatformColors {
   bg: string;
   surface: string;
@@ -57,6 +78,7 @@ export interface BookCatalogDto {
   slug: string;
   sinopsis: string | null;
   genre: GenreDto | null;
+  category: CategorySummaryDto | null;
   coverUrl: string | null;
   status: BookStatus;
   bookType: BookType;
@@ -98,6 +120,7 @@ export interface BookDetailDto {
   slug: string;
   sinopsis: string | null;
   genre: GenreDto | null;
+  category: CategorySummaryDto | null;
   coverUrl: string | null;
   status: BookStatus;
   bookType: BookType;
